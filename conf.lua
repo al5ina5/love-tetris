@@ -10,6 +10,7 @@ function love.conf(t)
     -- Game identity (for save files)
     t.identity = "sirtet"
     
-    -- Enable console for debugging on Windows
-    t.console = true
+    -- CRT Effect
+    t.crt = true
+    _G.CRT_ENABLED = t.crt
 end

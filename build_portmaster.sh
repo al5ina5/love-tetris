@@ -112,26 +112,26 @@ chmod +x "$BUILD_DIR/$GAME_NAME.sh"
 # 4. Create the Controller Mapping (.gptk)
 echo "Creating $GAME_NAME.gptk..."
 cat > "$BUILD_DIR/$GAME_NAME/$GAME_NAME.gptk" << 'EOF'
-back = esc
+back = m
 start = enter
 
-up = w
-down = s
-left = a
-right = d
+up = up
+down = down
+left = left
+right = right
 
-left_analog_up = w
-left_analog_down = s
-left_analog_left = a
-left_analog_right = d
+left_analog_up = up
+left_analog_down = down
+left_analog_left = left
+left_analog_right = right
 
-a = enter
-b = esc
-x = m
-y = tab
+a = x
+b = z
+x = space
+y = c
 
-l1 = tab
-r1 = m
+l1 = c
+r1 = x
 EOF
 
 # 5. Create PortMaster metadata (port.json)

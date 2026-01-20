@@ -28,8 +28,16 @@ function love.keypressed(key)
     Game:keypressed(key)
 end
 
+function love.keyreleased(key)
+    Game:keyreleased(key)
+end
+
 function love.gamepadpressed(joystick, button)
     Game:gamepadpressed(button)
+end
+
+function love.gamepadreleased(joystick, button)
+    Game:gamepadreleased(button)
 end
 
 -- Clean up on exit

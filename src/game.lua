@@ -24,6 +24,9 @@ local Game = {
     connectionTimer = 0,
     connectionTimeout = 10.0, -- 10 seconds timeout
     gameOverTimer = 0,
+    activeShader = nil,
+    shaderType = "OFF",
+    hasTimeUniform = false,
     
     -- State machine
     state = "waiting",
@@ -46,29 +49,51 @@ function Game:load()
     self.countdownTimer = 0
     self.sentGameOver = false
     
+    love.graphics.setDefaultFilter("nearest", "nearest")
+    love.graphics.setLineStyle("rough")
+    
     self.fonts = {
-        small = love.graphics.newFont(10),
-        medium = love.graphics.newFont(12),
-        large = love.graphics.newFont(60)
+        small = love.graphics.newFont('src/upheavtt.ttf', 8),
+        medium = love.graphics.newFont('src/upheavtt.ttf', 12),
+        large = love.graphics.newFont('src/upheavtt.ttf', 40),
+        score = love.graphics.newFont('src/upheavtt.ttf', 24)
     }
+    for _, f in pairs(self.fonts) do
+        f:setFilter("nearest", "nearest")
+    end
+    
+    self.canvas = love.graphics.newCanvas(320, 240)
+    self.canvas:setFilter("nearest", "nearest")
     
     self.discovery = Discovery:new()
-    self.menu = Menu:new(self.discovery)
+    self.menu = Menu:new(self.discovery, self.fonts)
     Audio:init()
     self.menu.onHost = function() self:becomeHost() end
     self.menu.onStopHost = function() self:stopHosting() end
+    self.menu.onStartAlone = function() self:startAlone() end
     self.menu.onJoin = function(ip, port) self:connectToServer(ip, port) end
+    self.menu.onMainMenu = function() self:returnToMainMenu() end
+    self.menu.onSettingChanged = function(key, value) self:handleSettingChange(key, value) end
+    
+    -- Apply initial settings
+    self:handleSettingChange("shader", self.menu.settings.shader)
+    self:handleSettingChange("musicVolume", self.menu.settings.musicVolume)
+    self:handleSettingChange("sfxVolume", self.menu.settings.sfxVolume)
+    self:handleSettingChange("sfxVolume", self.menu.settings.sfxVolume)
+    
     self.menu.onCancel = function()
         if self.network and not self.isHost then
             print("Game: Cancelling client connection")
             self.network:disconnect()
             self.network = nil
             self.connectionTimer = 0
+            Audio:playMusic('menu')
         end
     end
 
     -- Start with menu visible
     self.menu:show()
+    Audio:playMusic('menu')
 end
 
 function Game:update(dt)
@@ -139,6 +164,7 @@ function Game:update(dt)
         
         if self.countdownTimer <= 0 then
             self.state = self.STATE.PLAYING
+            Audio:playRandomGameMusic()
         end
     elseif self.state == self.STATE.GAME_OVER then
         self.gameOverTimer = self.gameOverTimer - dt
@@ -152,6 +178,9 @@ function Game:update(dt)
         return
     end
 
+    -- Update input timers
+    Input:update(dt)
+
     -- Playing State Logic
     if self.state == self.STATE.PLAYING then
         -- Check if anyone lost
@@ -162,36 +191,63 @@ function Game:update(dt)
 
         if anyGameOver then
             self.state = self.STATE.GAME_OVER
-            self.gameOverTimer = 3.0
+            self.gameOverTimer = 5.0
+            Audio:stopMusic()
             return
         end
 
         local moved = false
         local rotated = false
         
-        if Input:wasPressed("left") then 
+        if Input:shouldRepeat("left") or Input:shouldRepeat("dpleft", true) then 
             local m = self.localBoard:move(-1, 0)
             if m then Audio:play('move') end
             moved = m or moved
         end
-        if Input:wasPressed("right") then 
+        if Input:shouldRepeat("right") or Input:shouldRepeat("dpright", true) then 
             local m = self.localBoard:move(1, 0)
             if m then Audio:play('move') end
             moved = m or moved
         end
-        if Input:wasPressed("down") then 
+        if Input:shouldRepeat("down") or Input:shouldRepeat("dpdown", true) then 
             local m = self.localBoard:move(0, 1)
-            if m then Audio:play('move') end
+            if m then 
+                Audio:play('move')
+                self.localBoard.score = self.localBoard.score + 1
+            end
             moved = m or moved
         end
-        if Input:wasPressed("up") then 
-            rotated = self.localBoard:rotate()
+        if Input:wasKeyPressed("up") or Input:wasButtonPressed("dpup") then
+            -- Hard Drop (Apotris style)
+            local dropDistance = 0
+            while self.localBoard:move(0, 1) do 
+                dropDistance = dropDistance + 1
+            end
+            self.localBoard.score = self.localBoard.score + (dropDistance * 2)
+            self.localBoard:lockPiece()
+            moved = true
+        end
+        if Input:wasKeyPressed("x") or Input:wasButtonPressed("a") then 
+            rotated = self.localBoard:rotate(false) -- Clockwise
             if rotated then Audio:play('rotate') end
         end
-        if Input:wasPressed("space") then
-            -- Simple hard drop
-            while self.localBoard:move(0, 1) do 
+        if Input:wasKeyPressed("z") or Input:wasButtonPressed("b") then
+            rotated = self.localBoard:rotate(true) -- Counter-clockwise
+            if rotated then Audio:play('rotate') end
+        end
+        if Input:wasKeyPressed("a") or Input:wasKeyPressed("s") or Input:wasButtonPressed("leftshoulder") or Input:wasButtonPressed("rightshoulder") then
+            if self.localBoard:hold() then
+                Audio:play('rotate') -- Reuse rotate sound for hold for now
+                moved = true
             end
+        end
+        if Input:wasKeyPressed("space") then
+            -- Fallback hard drop for space, but 'up' is the main one now
+            local dropDistance = 0
+            while self.localBoard:move(0, 1) do 
+                dropDistance = dropDistance + 1
+            end
+            self.localBoard.score = self.localBoard.score + (dropDistance * 2)
             self.localBoard:lockPiece()
             moved = true
         end
@@ -213,7 +269,7 @@ function Game:update(dt)
         end
     end
 
-    Input:update()
+    Input:postUpdate()
 end
 
 function Game:startCountdown()
@@ -223,6 +279,12 @@ function Game:startCountdown()
     if self.network then
         self.network:sendMessage({type = Protocol.MSG.START_COUNTDOWN})
     end
+end
+
+function Game:startAlone()
+    print("Game: Starting alone")
+    self.menu:hide()
+    self:startCountdown()
 end
 
 function Game:syncLocalState(forceBoardSync)
@@ -337,79 +399,175 @@ function Game:handleNetworkMessage(msg)
     end
 end
 
-function Game:draw()
-    local sw, sh = love.graphics.getDimensions()
-    local hasOpponents = self:countRemotePlayers() > 0
+function Game:drawText(text, x, y, limit, align, color, shadowColor, outlineColor)
+    color = color or {1, 1, 1}
+    shadowColor = shadowColor or {0, 0, 0, 1} -- Opaque shadow
+    outlineColor = outlineColor or {0, 0, 0, 1} -- Opaque outline
     
-    -- Maximize board size to use vertical space, leaving room for score and padding
-    local bs = math.floor((sh - 80) / 20)
-    local bw, bh = 10 * bs, 20 * bs
+    x, y = math.floor(x), math.floor(y)
     
-    if not hasOpponents then
-        -- Centered layout for solo play/waiting
-        local bx, by = (sw - bw) / 2, (sh - bh) / 2 + 15 -- Offset down for score
-        
-        self.localBoard:draw(bx, by, bs)
-        
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.setFont(self.fonts.medium)
-        love.graphics.printf("YOU: " .. self.localBoard.score, 0, by - 25, sw, "center")
-        
-        if self.state == self.STATE.WAITING then
-            love.graphics.printf("WAITING FOR OPPONENT...", 0, by + bh + 10, sw, "center")
-        end
-    else
-        -- 50/50 Screen Layout
-        -- Left half (YOU)
-        local lx = (sw / 2 - bw) / 2
-        local ly = (sh - bh) / 2 + 15
-        self.localBoard:draw(lx, ly, bs)
-        
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.setFont(self.fonts.small)
-        love.graphics.printf("YOU: " .. self.localBoard.score, 0, ly - 20, sw / 2, "center")
-        
-        -- Right half (OPPONENT)
-        local count = 0
-        local remoteCount = self:countRemotePlayers()
-        local opponentColor = {0.5, 0.5, 0.5}
-        for id, board in pairs(self.remoteBoards) do
-            if count == 0 then
-                -- Primary opponent
-                local rx = sw / 2 + (sw / 2 - bw) / 2
-                local ry = (sh - bh) / 2 + 15
-                board:draw(rx, ry, bs, opponentColor)
-                love.graphics.printf("OPPONENT: " .. (board.score or 0), sw / 2, ry - 20, sw / 2, "center")
-            else
-                -- Small previews for additional players if they exist
-                -- Stack them on the right side if there's space
-                local miniBs = math.floor(bs / 2)
-                local miniBw, miniBh = 10 * miniBs, 20 * miniBs
-                local ex = sw - miniBw - 10
-                local ey = 10 + (count - 1) * (miniBh + 20)
-                board:draw(ex, ey, miniBs, opponentColor)
+    -- Draw outline (thick retro style)
+    love.graphics.setColor(outlineColor)
+    for ox = -1, 1 do
+        for oy = -1, 1 do
+            if ox ~= 0 or oy ~= 0 then
+                love.graphics.printf(text, x + ox, y + oy, limit, align)
             end
-            count = count + 1
+        end
+    end
+    
+    -- Draw 3D-ish Shadow
+    love.graphics.setColor(shadowColor)
+    love.graphics.printf(text, x, y + 1, limit, align)
+    
+    -- Draw main text
+    love.graphics.setColor(color)
+    love.graphics.printf(text, x, y, limit, align)
+end
+
+function Game:draw()
+    local sw, sh = 320, 240
+    local winW, winH = love.graphics.getDimensions()
+    local scale = math.min(winW / sw, winH / sh)
+    local ox, oy = (winW - sw * scale) / 2, (winH - sh * scale) / 2
+
+    -- PASS 1: Render shaded elements to our low-res canvas
+    love.graphics.setCanvas(self.canvas)
+    love.graphics.clear()
+    
+    if self.menu:isVisible() then
+        self.menu:drawBackground(self)
+    else
+        local hasOpponents = self:countRemotePlayers() > 0
+        local bsW, bsH = 16, 11
+        local bw, bh = 10 * bsW, 20 * bsH
+        
+        if not hasOpponents then
+            local bx = (sw - bw) / 2
+            local by = 0
+            self.localBoard:draw(bx, by, bsW, bsH, self, nil, self.menu.settings.ghost)
+            if self.localBoard.holdPieceType then
+                self.localBoard:drawPiecePreview(self.localBoard.holdPieceType, bx + 10, bh + 2, 4, 4)
+            end
+            self.localBoard:drawPiecePreview(self.localBoard.nextPieceType, bx + bw - 26, bh + 2, 4, 4)
+        else
+            -- Left half (YOU)
+            local lx = 0
+            local ly = 0
+            self.localBoard:draw(lx, ly, bsW, bsH, self, nil, self.menu.settings.ghost)
+            if self.localBoard.holdPieceType then
+                self.localBoard:drawPiecePreview(self.localBoard.holdPieceType, lx + 10, bh + 2, 4, 4)
+            end
+            self.localBoard:drawPiecePreview(self.localBoard.nextPieceType, lx + bw - 26, bh + 2, 4, 4)
+            
+            -- Right half (OPPONENT)
+            local count = 0
+            local opponentColor = {0.5, 0.5, 0.5}
+            for id, board in pairs(self.remoteBoards) do
+                if count == 0 then
+                    local rx = sw / 2
+                    local ry = 0
+                    board:draw(rx, ry, bsW, bsH, self, opponentColor)
+                    board:drawPiecePreview(board.nextPieceType, rx + bw - 26, bh + 2, 4, 4)
+                else
+                    local miniBs = 4
+                    local miniBw, miniBh = 10 * miniBs, 20 * miniBs
+                    local ex = sw - miniBw - 5
+                    local ey = 5 + (count - 1) * (miniBh + 10)
+                    board:draw(ex, ey, miniBs, miniBs, self, opponentColor)
+                end
+                count = count + 1
+            end
+            
+            -- Vertical divider
+            love.graphics.setColor(0.3, 0.3, 0.3)
+            love.graphics.line(sw / 2, 0, sw / 2, sh)
         end
         
-        -- Vertical divider
-        love.graphics.setColor(0.3, 0.3, 0.3)
-        love.graphics.line(sw / 2, 0, sw / 2, sh)
+        -- Overlay backgrounds (shaded)
+        if self.state == self.STATE.COUNTDOWN then
+            love.graphics.setColor(0, 0, 0, 0.7)
+            love.graphics.rectangle("fill", 0, 0, sw, sh)
+        elseif self.state == self.STATE.GAME_OVER then
+            love.graphics.setColor(0, 0, 0, 0.8)
+            love.graphics.rectangle("fill", 0, 0, sw, sh)
+        end
     end
     
-    -- Overlay for Countdown
-    if self.state == self.STATE.COUNTDOWN then
-        love.graphics.setColor(0, 0, 0, 0.7)
-        love.graphics.rectangle("fill", 0, 0, sw, sh)
-        love.graphics.setColor(1, 1, 1)
-        love.graphics.setFont(self.fonts.large)
-        local text = math.ceil(self.countdownTimer)
-        if text == 0 then text = "GO!" end
-        love.graphics.printf(tostring(text), 0, sh/2 - 30, sw, "center")
+    love.graphics.setCanvas()
+    
+    -- DRAW CANVAS WITH SHADER
+    love.graphics.setColor(1, 1, 1)
+    if self.activeShader then
+        if self.hasTimeUniform then
+            self.activeShader:send("time", love.timer.getTime())
+        end
+        love.graphics.setShader(self.activeShader)
+    end
+    love.graphics.draw(self.canvas, ox, oy, 0, scale, scale)
+    love.graphics.setShader()
+
+    -- PASS 2: Render unshaded elements (UI and Text) directly to screen
+    -- Apply the same transformation so UI elements are positioned correctly
+    love.graphics.push()
+    love.graphics.translate(ox, oy)
+    love.graphics.scale(scale)
+    
+    if self.menu:isVisible() then
+        self.menu:drawForeground(self)
+    else
+        local hasOpponents = self:countRemotePlayers() > 0
+        local bsW, bsH = 16, 11
+        local bw, bh = 10 * bsW, 20 * bsH
+
+        if not hasOpponents then
+            local bx = (sw - bw) / 2
+            love.graphics.setFont(self.fonts.score)
+            self:drawText(tostring(self.localBoard.score), bx, bh + 2, bw, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
+            
+            if self.state == self.STATE.WAITING then
+                love.graphics.setFont(self.fonts.small)
+                self:drawText("WAITING FOR OPPONENT...", bx, bh - 20, bw, "center", {0.7, 0.7, 0.7})
+            end
+        else
+            -- Scores for multiplayer
+            love.graphics.setFont(self.fonts.score)
+            self:drawText(tostring(self.localBoard.score), 0, bh + 2, sw / 2, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
+            
+            local count = 0
+            for id, board in pairs(self.remoteBoards) do
+                if count == 0 then
+                    self:drawText(tostring(board.score or 0), sw / 2, bh + 2, sw / 2, "center", {0.8, 0.8, 0.8})
+                end
+                count = count + 1
+            end
+        end
+
+        -- Countdown Text
+        if self.state == self.STATE.COUNTDOWN then
+            love.graphics.setFont(self.fonts.large)
+            local text = math.ceil(self.countdownTimer)
+            if text == 0 then text = "GO!" end
+            self:drawText(tostring(text), 0, sh/2 - 20, sw, "center", {1, 0.3, 0.1}, {0.3, 0, 0})
+        end
+
+        -- Game Over Text
+        if self.state == self.STATE.GAME_OVER then
+            love.graphics.setFont(self.fonts.large)
+            local text = "GAME OVER"
+            local color = {1, 0.2, 0.2}
+            local shadow = {0.3, 0, 0}
+            
+            if self:countRemotePlayers() > 0 and not self.localBoard.gameOver then
+                text = "YOU WON!"
+                color = {0.2, 1, 0.2}
+                shadow = {0, 0.3, 0}
+            end
+            self:drawText(text, 0, sh/2 - 20, sw, "center", color, shadow)
+        end
     end
     
-    -- Menu (always on top)
-    self.menu:draw()
+    love.graphics.pop()
 end
 
 function Game:countRemotePlayers()
@@ -423,20 +581,57 @@ function Game:keypressed(key)
         if self.menu:keypressed(key) then return end
     end
     
-    if key == "m" or key == "tab" then
-        self.menu:show()
+    if key == "m" or key == "tab" or key == "escape" then
+        if self.state == self.STATE.PLAYING or self.state == self.STATE.COUNTDOWN or self.state == self.STATE.GAME_OVER then
+            if self.menu:isVisible() then
+                self.menu:hide()
+            else
+                self.menu:show(self.menu.STATE.PAUSE)
+            end
+        else
+            -- If we are in WAITING or something else, ESC might mean something else
+            if key == "escape" then
+                if self.menu:isVisible() then 
+                    self.menu:hide() 
+                else 
+                    love.event.quit() 
+                end
+            else
+                self.menu:show()
+            end
+        end
     elseif key == "f" then
         love.window.setFullscreen(not love.window.getFullscreen())
-    elseif key == "escape" then
-        if self.menu:isVisible() then self.menu:hide() else love.event.quit() end
     end
     
     -- Map keyboard to Input system
     Input:keyPressed(key)
 end
 
+function Game:keyreleased(key)
+    Input:keyReleased(key)
+end
+
 function Game:gamepadpressed(button)
-    -- Handle gamepad if needed, but for now just keyboard
+    if self.menu:isVisible() then
+        if self.menu:gamepadpressed(button) then return end
+    end
+    
+    if button == "start" then
+        if self.state == self.STATE.PLAYING or self.state == self.STATE.COUNTDOWN or self.state == self.STATE.GAME_OVER then
+            if self.menu:isVisible() then
+                self.menu:hide()
+            else
+                self.menu:show(self.menu.STATE.PAUSE)
+            end
+        end
+    end
+
+    Input:gamepadPressed(button)
+end
+
+function Game:gamepadreleased(button)
+    Input:gamepadReleased(button)
 end
 
 function Game:becomeHost()
@@ -462,6 +657,7 @@ function Game:stopHosting()
     self.discovery:stopAdvertising()
     self.isHost = false
     self.remoteBoards = {}
+    Audio:playMusic('menu')
 end
 
 function Game:connectToServer(address, port)
@@ -490,7 +686,51 @@ function Game:reset()
         self:startCountdown()
     else
         self.state = self.STATE.WAITING
+        Audio:playMusic('menu')
     end
+end
+
+function Game:handleSettingChange(key, value)
+    print("Game: Setting changed: " .. key .. " = " .. tostring(value))
+    if key == "shader" then
+        self.shaderType = value
+        if value == "OFF" then
+            self.activeShader = nil
+        else
+            local shaderPath = 'src.shaders.' .. string.lower(value)
+            local status, shaderCode = pcall(require, shaderPath)
+            if status then
+                self.activeShader = love.graphics.newShader(shaderCode)
+                -- Send common uniforms if they exist and ARE USED in the shader
+                if self.activeShader:hasUniform("inputRes") then
+                    self.activeShader:send("inputRes", {320, 240})
+                end
+                self.hasTimeUniform = self.activeShader:hasUniform("time")
+            else
+                print("Error loading shader: " .. tostring(shaderCode))
+                self.activeShader = nil
+            end
+        end
+    elseif key == "fullscreen" then
+        love.window.setFullscreen(value)
+    elseif key == "musicVolume" then
+        Audio:setMusicVolume(value / 10)
+    elseif key == "sfxVolume" then
+        Audio:setSFXVolume(value / 10)
+    end
+end
+
+function Game:returnToMainMenu()
+    print("Game: Returning to main menu")
+    if self.isHost then
+        self:stopHosting()
+    elseif self.network then
+        self.network:disconnect()
+        self.network = nil
+    end
+    self.remoteBoards = {}
+    self.state = self.STATE.WAITING
+    Audio:playMusic('menu')
 end
 
 function Game:quit()

@@ -20,8 +20,62 @@ function Discovery:new()
     self.serverInfo = nil
     self.socket = nil
     self.mode = nil  -- "server" or "client"
+    self.localIP = self:fetchLocalIP()
     
     return self
+end
+
+-- Helper to find the actual local IP address
+function Discovery:fetchLocalIP()
+    local s = socket.udp()
+    if not s then return "unknown" end
+    
+    -- Try to find the outgoing interface by "connecting" to an external IP
+    -- (doesn't actually send any data)
+    local targets = {"8.8.8.8", "1.1.1.1", "192.168.1.1", "192.168.0.1", "10.0.0.1"}
+    local ip = nil
+    
+    for _, target in ipairs(targets) do
+        if s:setpeername(target, 80) then
+            local getsockname_ip = s:getsockname()
+            if getsockname_ip and getsockname_ip ~= "0.0.0.0" and getsockname_ip ~= "127.0.0.1" then
+                ip = getsockname_ip
+                break
+            end
+        end
+    end
+    
+    s:close()
+    return ip or "unknown"
+end
+
+-- Helper to get all likely broadcast addresses
+function Discovery:getBroadcastAddresses()
+    local addresses = {
+        "255.255.255.255", -- Global broadcast
+        "127.0.0.1"        -- Localhost
+    }
+    
+    local ip = self:fetchLocalIP()
+    if ip ~= "unknown" and ip ~= "127.0.0.1" then
+        -- Calculate subnet broadcast (assume /24)
+        local a, b, c = ip:match("(%d+)%.(%d+)%.(%d+)%.%d+")
+        if a and b and c then
+            table.insert(addresses, string.format("%s.%s.%s.255", a, b, c))
+        end
+    end
+    
+    -- Common home network broadcasts
+    local common = {"192.168.1.255", "192.168.0.255", "192.168.2.255", "10.0.0.255"}
+    for _, addr in ipairs(common) do
+        local exists = false
+        for _, existing in ipairs(addresses) do
+            if existing == addr then exists = true; break end
+        end
+        if not exists then table.insert(addresses, addr) end
+    end
+    
+    return addresses
 end
 
 -- Create and configure a fresh UDP socket
@@ -40,6 +94,7 @@ function Discovery:createSocket()
     self.socket = sock
     self.socket:settimeout(0)  -- Non-blocking
     self.socket:setoption("broadcast", true)
+    self.socket:setoption("reuseaddr", true)
     
     return self.socket
 end
@@ -47,15 +102,16 @@ end
 -- Start advertising as a server
 function Discovery:startAdvertising(serverName, gamePort, maxPlayers)
     print("Discovery: Attempting to start advertising...")
+    self.localIP = self:fetchLocalIP()
     self:createSocket()
     if not self.socket then return end
     
     -- Bind to the discovery port to receive client queries
-    -- On Mac/Unix, "0.0.0.0" is often better than "*" for broadcast
-    local success, err = self.socket:setsockname("0.0.0.0", DISCOVERY_PORT)
+    -- "*" or "0.0.0.0" allows receiving broadcasts on all interfaces
+    local success, err = self.socket:setsockname("*", DISCOVERY_PORT)
     if not success then
         print("Discovery: port " .. DISCOVERY_PORT .. " busy, falling back: " .. tostring(err))
-        self.socket:setsockname("0.0.0.0", 0)
+        self.socket:setsockname("*", 0)
     end
     
     local boundIp, boundPort = self.socket:getsockname()
@@ -71,7 +127,7 @@ function Discovery:startAdvertising(serverName, gamePort, maxPlayers)
     
     -- Reset timer to broadcast immediately
     self.broadcastTimer = BROADCAST_INTERVAL
-    print("Discovery: Advertising as '" .. self.serverInfo.name .. "'")
+    print("Discovery: Advertising as '" .. self.serverInfo.name .. "' (IP: " .. self.localIP .. ")")
 end
 
 -- Stop advertising
@@ -98,7 +154,8 @@ function Discovery:startListening()
         print("Discovery: Starting client listener")
         self:createSocket()
         if self.socket then
-            self.socket:setsockname("0.0.0.0", 0)
+            -- Client binds to random port
+            self.socket:setsockname("*", 0)
             local ip, port = self.socket:getsockname()
             print("Discovery: Client bound to " .. tostring(ip) .. ":" .. tostring(port))
             self.mode = "client"
@@ -139,15 +196,10 @@ function Discovery:broadcastServer()
         self.serverInfo.maxPlayers
     )
     
-    -- Attempt broadcast to 255.255.255.255
-    self.socket:sendto(msg, "255.255.255.255", DISCOVERY_PORT)
-    
-    -- Common subnet broadcasts (works better on some OSs)
-    self.socket:sendto(msg, "192.168.1.255", DISCOVERY_PORT)
-    self.socket:sendto(msg, "192.168.0.255", DISCOVERY_PORT)
-    
-    -- Also send to localhost to ensure local testing works regardless of broadcast settings
-    self.socket:sendto(msg, "127.0.0.1", DISCOVERY_PORT)
+    local addresses = self:getBroadcastAddresses()
+    for _, addr in ipairs(addresses) do
+        self.socket:sendto(msg, addr, DISCOVERY_PORT)
+    end
 end
 
 -- Send a discovery request (as client looking for servers)
@@ -158,11 +210,12 @@ function Discovery:sendDiscoveryRequest()
     if not self.socket then return end
     
     local msg = "DISCOVER"
-    print("Discovery: Sending broadcast request to 255.255.255.255 and common subnets...")
-    self.socket:sendto(msg, "255.255.255.255", DISCOVERY_PORT)
-    self.socket:sendto(msg, "192.168.1.255", DISCOVERY_PORT)
-    self.socket:sendto(msg, "192.168.0.255", DISCOVERY_PORT)
-    self.socket:sendto(msg, "127.0.0.1", DISCOVERY_PORT)
+    local addresses = self:getBroadcastAddresses()
+    
+    print("Discovery: Sending broadcast request to " .. #addresses .. " addresses...")
+    for _, addr in ipairs(addresses) do
+        self.socket:sendto(msg, addr, DISCOVERY_PORT)
+    end
 end
 
 -- Receive and process messages
