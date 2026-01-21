@@ -28,28 +28,55 @@ function RelayClient:connect(roomCode, playerId)
     
     print("RelayClient: Connecting to " .. Constants.RELAY_HOST .. ":" .. Constants.RELAY_PORT)
     
+    -- Resolve hostname to IP to avoid some luasocket issues with DNS
+    local ip = socket.dns.toip(Constants.RELAY_HOST)
+    if not ip then
+        print("RelayClient: Could not resolve hostname: " .. Constants.RELAY_HOST)
+        return false
+    end
+
     local tcp, err = socket.tcp()
     if not tcp then
         print("RelayClient: Failed to create socket: " .. tostring(err))
         return false
     end
     
-    tcp:settimeout(5) -- 5 second timeout for initial connection
-    local success, connectErr = tcp:connect(Constants.RELAY_HOST, Constants.RELAY_PORT)
+    -- Use non-blocking connect pattern for better reliability across OSs
+    tcp:settimeout(0) 
+    local success, connectErr = tcp:connect(ip, Constants.RELAY_PORT)
     
-    if not success then
-        print("RelayClient: Connection failed: " .. tostring(connectErr))
+    -- "timeout" or "Operation already in progress" means it's connecting in background
+    if not success and connectErr ~= "timeout" and connectErr ~= "Operation already in progress" then
+        print("RelayClient: Connection failed immediately: " .. tostring(connectErr))
         return false
     end
     
-    tcp:settimeout(0) -- Set to non-blocking for gameplay
-    tcp:setoption("tcp-nodelay", true) -- Disable Nagle's algorithm for speed
+    -- Wait for the socket to become writable (indicates connection success)
+    local retries = 0
+    local connected = false
+    while retries < 5 and not connected do
+        local _, writable, selectErr = socket.select(nil, {tcp}, 1) -- 1 second per check
+        if writable and #writable > 0 then
+            connected = true
+        else
+            retries = retries + 1
+            print("RelayClient: Waiting for connection... (try " .. retries .. "/5)")
+        end
+    end
     
+    if not connected then
+        print("RelayClient: Connection timed out or failed")
+        tcp:close()
+        return false
+    end
+    
+    -- Connection successful
+    tcp:setoption("tcp-nodelay", true)
     self.tcp = tcp
     self.connected = true
     
-    -- Send handshake to the relay
-    self.tcp:send("JOIN:" .. self.roomCode .. "\n")
+    -- Send handshake
+    self:send("JOIN:" .. self.roomCode)
     print("RelayClient: Connected and joined room " .. self.roomCode)
     
     return true
