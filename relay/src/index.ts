@@ -1,7 +1,6 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import net from 'net';
-import { v4 as uuidv4 } from 'uuid';
 
 // --- Configuration ---
 const HTTP_PORT = process.env.PORT || 3000;
@@ -41,7 +40,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post('/api/create-room', (req, res) => {
+app.post('/api/create-room', (req: Request, res: Response) => {
   const { isPublic, hostName = 'Host' } = req.body;
   const code = generateRoomCode();
   
@@ -60,7 +59,7 @@ app.post('/api/create-room', (req, res) => {
   console.log(`[HTTP] Room ${code} created`);
 });
 
-app.get('/api/list-rooms', (req, res) => {
+app.get('/api/list-rooms', (_req: Request, res: Response) => {
   const now = Date.now();
   const publicRooms = Array.from(rooms.values()).filter(r => 
     r.isPublic && 
@@ -70,7 +69,7 @@ app.get('/api/list-rooms', (req, res) => {
   res.json({ rooms: publicRooms });
 });
 
-app.post('/api/join-room', (req, res) => {
+app.post('/api/join-room', (req: Request, res: Response) => {
   const { roomCode } = req.body;
   const room = rooms.get(roomCode?.toUpperCase());
   
@@ -80,7 +79,7 @@ app.post('/api/join-room', (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/api/heartbeat', (req, res) => {
+app.post('/api/heartbeat', (req: Request, res: Response) => {
   const { roomCode } = req.body;
   const room = rooms.get(roomCode?.toUpperCase());
   if (room) {
@@ -96,11 +95,11 @@ app.listen(HTTP_PORT, () => {
 });
 
 // --- TCP Server (Real-time Relay) ---
-const tcpServer = net.createServer((socket) => {
+const tcpServer = net.createServer((socket: net.Socket) => {
   let currentRoomCode: string | null = null;
   let buffer = '';
 
-  socket.on('data', (data) => {
+  socket.on('data', (data: Buffer) => {
     buffer += data.toString();
     const lines = buffer.split('\n');
     buffer = lines.pop() || '';
@@ -130,7 +129,7 @@ const tcpServer = net.createServer((socket) => {
         continue;
       }
 
-      // Forward data to others in the same room
+      -- Forward data to others in the same room
       if (currentRoomCode) {
         const roomData = roomSockets.get(currentRoomCode);
         if (roomData) {
