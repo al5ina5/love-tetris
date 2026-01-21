@@ -1,0 +1,23 @@
+{
+  "name": "sirtet-relay",
+  "version": "1.0.0",
+  "description": "Unified Matchmaker and TCP Relay for Sirtet",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.4.5",
+    "@types/cors": "^2.8.13",
+    "typescript": "^5.1.6",
+    "ts-node": "^10.9.1"
+  }
+}

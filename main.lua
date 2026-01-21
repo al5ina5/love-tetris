@@ -1,7 +1,7 @@
 -- main.lua
--- Entry point for the LÖVE2D game (like index.js in Node.js)
+-- Entry point for the LÖVE2D game
 
-local Game = require('src.game')
+local Game = require('src.game.game')
 
 function love.load()
     -- Pixel-art friendly graphics settings
@@ -38,6 +38,12 @@ end
 
 function love.gamepadreleased(joystick, button)
     Game:gamepadreleased(button)
+end
+
+function love.textinput(text)
+    if Game.menu and Game.menu.textinput then
+        Game.menu:textinput(text)
+    end
 end
 
 -- Clean up on exit

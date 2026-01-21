@@ -39,8 +39,9 @@ end
 
 function StateManager.updateWaiting(state, game)
     -- If we have an opponent, start countdown and hide menu
-    if game.isHost and game:countRemotePlayers() > 0 then
-        print("StateManager: Host has players, starting countdown")
+    local remoteCount = game:countRemotePlayers()
+    if game.isHost and remoteCount > 0 then
+        print("StateManager: Host has " .. remoteCount .. " players, starting countdown")
         game.menu:hide()
         StateManager.startCountdown(state, game)
     end

@@ -113,15 +113,33 @@ function Game:load()
         SettingsHandler.handleControlsChange(self)
     end
     self.menu.onCancel = function()
-        if self.network and not self.isHost then
-            print("Game: Cancelling client connection")
+        print("Game: Cancel requested")
+        
+        -- Handle online multiplayer cleanup
+        if self.connectionManager.onlineClient then
+            print("Game: Disconnecting online client")
+            if self.connectionManager.onlineClient.disconnect then
+                self.connectionManager.onlineClient:disconnect()
+            end
+            self.connectionManager.onlineClient = nil
+        end
+        
+        -- Handle regular network cleanup
+        if self.network then
+            print("Game: Disconnecting network")
             if self.network.disconnect then
                 self.network:disconnect()
             end
             self.network = nil
-            self.connectionManager.connectionTimer = 0
-            Audio:playMusic('menu')
         end
+        
+        -- Reset state
+        self.isHost = false
+        self.playerId = nil
+        self.remoteBoards = {}
+        self.connectionManager.connectionTimer = 0
+        self.stateManager.current = "waiting"
+        Audio:playMusic('menu')
     end
     -- Online multiplayer callbacks
     self.menu.onHostOnline = function(isPublic)
@@ -160,10 +178,8 @@ function Game:update(dt)
     -- Update connection manager
     ConnectionManager.update(dt, self)
     
-    -- State machine updates
-    if not self.menu:isVisible() then
-        StateManager.update(self.stateManager, dt, self)
-    end
+    -- State machine updates (run even when menu visible for waiting state)
+    StateManager.update(self.stateManager, dt, self)
 
     if self.menu:isVisible() then
         self.menu:update(dt)

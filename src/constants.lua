@@ -91,6 +91,8 @@ Constants.WALL_KICKS_I = {
 }
 
 -- Online multiplayer API endpoint
-Constants.API_BASE_URL = "https://love-tetris.vercel.app"
+Constants.API_BASE_URL = "https://sirtet-multiplayer.onrender.com"
+Constants.RELAY_HOST = "sirtet-multiplayer.onrender.com" 
+Constants.RELAY_PORT = 12346
 
 return Constants

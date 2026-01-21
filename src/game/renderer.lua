@@ -262,7 +262,7 @@ function Renderer.drawGameUI(state, game, sw, sh)
     -- Countdown
     if game.state == "countdown" then
         love.graphics.setFont(state.fonts.large)
-        local text = math.ceil(game.countdownTimer)
+        local text = math.ceil(game.stateManager.countdownTimer)
         if text == 0 then text = "GO!" end
         Renderer.drawText(tostring(text), 0, sh/2 - 20, sw, "center", {1, 0.3, 0.1}, {0.3, 0, 0})
     end

@@ -1,1 +1,5 @@
 .DS_Store
+api/node_modules/
+api/dist/
+api/.vercel/
+.vercel

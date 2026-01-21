@@ -190,17 +190,19 @@ end
 -- Draw online waiting screen
 function OnlineScreens.drawWaiting(menu, sw, sh, game)
     if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-    game:drawText("WAITING FOR PLAYER", 0, 60, sw, "center", {1, 1, 1})
+    game:drawText("WAITING FOR PLAYER", 0, 50, sw, "center", {1, 1, 1})
     
-    -- Show room code
+    -- Show room code with better spacing
     if menu.onlineRoomCode then
+        if menu.fonts then love.graphics.setFont(menu.fonts.small) end
+        game:drawText("Room Code", 0, 85, sw, "center", {0.8, 0.8, 0.8})
+        
         if menu.fonts then love.graphics.setFont(menu.fonts.large) end
-        game:drawText("Room Code:", 0, 90, sw, "center", {0.8, 0.8, 0.8})
-        game:drawText(menu.onlineRoomCode, 0, 110, sw, "center", {1, 1, 0.5})
+        game:drawText(menu.onlineRoomCode, 0, 105, sw, "center", {1, 1, 0.5})
     end
     
     if menu.fonts then love.graphics.setFont(menu.fonts.small) end
-    game:drawText("Share this code with your opponent", 0, 140, sw, "center", {0.6, 0.6, 0.6})
+    game:drawText("Share this code with your opponent", 0, 145, sw, "center", {0.6, 0.6, 0.6})
     game:drawText("Press ESC to cancel", 0, sh - 30, sw, "center", {0.6, 0.6, 0.6})
 end
 
@@ -373,6 +375,54 @@ function OnlineScreens.handleBackspace(menu)
             menu.roomCode = menu.roomCode:sub(1, -2)
             return true
         end
+    end
+    
+    return false
+end
+
+-- Handle keyboard input for online waiting screen
+function OnlineScreens.handleWaitingKey(menu, key, game)
+    local Base = require('src.ui.menu.base')
+    
+    if key == "escape" or key == "z" then
+        print("Menu: User cancelled online hosting")
+        
+        -- Disconnect online client
+        if menu.onCancel then
+            menu.onCancel()
+        end
+        
+        -- Clear online room state
+        menu.onlineRoomCode = nil
+        
+        -- Return to online submenu
+        menu.state = Base.STATE.SUBMENU_ONLINE
+        menu.selectedIndex = 1
+        return true
+    end
+    
+    return false
+end
+
+-- Handle gamepad input for online waiting screen
+function OnlineScreens.handleWaitingGamepad(menu, button, game)
+    local Base = require('src.ui.menu.base')
+    
+    if button == "b" or button == "back" then
+        print("Menu: User cancelled online hosting (gamepad)")
+        
+        -- Disconnect online client
+        if menu.onCancel then
+            menu.onCancel()
+        end
+        
+        -- Clear online room state
+        menu.onlineRoomCode = nil
+        
+        -- Return to online submenu
+        menu.state = Base.STATE.SUBMENU_ONLINE
+        menu.selectedIndex = 1
+        return true
     end
     
     return false

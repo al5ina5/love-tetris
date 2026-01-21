@@ -6,12 +6,13 @@ NetworkAdapter.__index = NetworkAdapter
 
 NetworkAdapter.TYPE = {
     LAN = "lan",
-    ONLINE = "online"
+    ONLINE = "online",
+    RELAY = "relay"
 }
 
 function NetworkAdapter:new(type, client, server)
     local self = setmetatable({}, NetworkAdapter)
-    self.type = type -- "lan" or "online"
+    self.type = type -- "lan", "online", or "relay"
     self.client = client
     self.server = server -- Only for LAN host
     return self
@@ -22,9 +23,14 @@ function NetworkAdapter:createLAN(client, server)
     return NetworkAdapter:new(NetworkAdapter.TYPE.LAN, client, server)
 end
 
--- Create Online adapter (Ably)
+-- Create Online adapter (Legacy Ably)
 function NetworkAdapter:createOnline(client)
     return NetworkAdapter:new(NetworkAdapter.TYPE.ONLINE, client, nil)
+end
+
+-- Create Relay adapter (Socket)
+function NetworkAdapter:createRelay(client)
+    return NetworkAdapter:new(NetworkAdapter.TYPE.RELAY, client, nil)
 end
 
 -- Check if this is a host
@@ -166,15 +172,17 @@ end
 
 -- Send heartbeat (online only)
 function NetworkAdapter:heartbeat()
-    if self.type == NetworkAdapter.TYPE.ONLINE and self.client then
-        return self.client:heartbeat()
+    if (self.type == NetworkAdapter.TYPE.ONLINE or self.type == NetworkAdapter.TYPE.RELAY) and self.client then
+        if self.client.heartbeat then
+            return self.client:heartbeat()
+        end
     end
     return true -- LAN doesn't need heartbeat
 end
 
 -- Get room code (online only)
 function NetworkAdapter:getRoomCode()
-    if self.type == NetworkAdapter.TYPE.ONLINE and self.client then
+    if (self.type == NetworkAdapter.TYPE.ONLINE or self.type == NetworkAdapter.TYPE.RELAY) and self.client then
         return self.client.roomCode
     end
     return nil

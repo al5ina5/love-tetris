@@ -4,6 +4,7 @@
 local Client = require('src.net.client')
 local Server = require('src.net.server')
 local OnlineClient = require('src.net.online_client')
+local RelayClient = require('src.net.relay_client')
 local NetworkAdapter = require('src.net.network_adapter')
 local Audio = require('src.audio')
 
@@ -107,7 +108,18 @@ function ConnectionManager.returnToMainMenu(game)
         end
         game.network = nil
     end
+    
+    -- Clean up online client
+    if game.connectionManager.onlineClient then
+        if game.connectionManager.onlineClient.disconnect then
+            game.connectionManager.onlineClient:disconnect()
+        end
+        game.connectionManager.onlineClient = nil
+    end
+    
     game.remoteBoards = {}
+    game.playerId = nil
+    game.isHost = false
     game.stateManager.current = "waiting"
     Audio:playMusic('menu')
 end
@@ -140,11 +152,19 @@ function ConnectionManager.hostOnline(isPublic, game)
     
     print("Connection: Online room created with code: " .. roomCode)
     
+    -- Setup relay client (Socket)
+    local relayClient = RelayClient:new()
+    if not relayClient:connect(roomCode, "host") then
+        print("Connection: Failed to connect to relay server")
+        game.menu.onlineError = "Failed to connect to real-time relay server.\nCheck your internet connection."
+        return false
+    end
+
     -- Setup network adapter
-    game.network = NetworkAdapter:createOnline(onlineClient)
+    game.network = NetworkAdapter:createRelay(relayClient)
     game.isHost = true
     game.playerId = "host"
-    game.connectionManager.onlineClient = onlineClient
+    game.connectionManager.onlineClient = onlineClient -- Keep for heartbeat
     
     -- Show waiting screen with room code
     game.menu.onlineRoomCode = roomCode
@@ -180,18 +200,27 @@ function ConnectionManager.joinOnline(roomCode, game)
     
     print("Connection: Successfully joined online room")
     
+    -- Setup relay client (Socket)
+    local relayClient = RelayClient:new()
+    if not relayClient:connect(roomCode, "client") then
+        print("Connection: Failed to connect to relay server")
+        game.menu.onlineError = "Failed to connect to real-time relay server."
+        return false
+    end
+
     -- Setup network adapter
-    game.network = NetworkAdapter:createOnline(onlineClient)
+    game.network = NetworkAdapter:createRelay(relayClient)
     game.isHost = false
     game.playerId = "client"
     game.connectionManager.onlineClient = onlineClient
     
-    -- Publish join message
-    onlineClient:publish("join")
+    -- Notify relay we are ready
+    local Protocol = require('src.net.protocol')
+    relayClient:send(Protocol.encode(Protocol.MSG.PLAYER_JOIN, "client"))
     
-    -- Hide menu and start game
+    -- Hide menu and wait for host to start countdown (same as LAN)
     game.menu:hide()
-    game.stateManager.current = "playing"
+    game.stateManager.current = "waiting"
     
     return true
 end

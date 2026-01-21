@@ -129,9 +129,6 @@ function OnlineClient:createRoom(isPublic)
     end
     
     self.roomCode = response.roomCode
-    self.channelName = response.channelName
-    self.ablyToken = response.ablyToken
-    self.playerId = "host"
     self.connected = true
     
     print("OnlineClient: Room created: " .. self.roomCode)
@@ -156,9 +153,6 @@ function OnlineClient:joinRoom(roomCode)
     end
     
     self.roomCode = roomCode:upper()
-    self.channelName = response.channelName
-    self.ablyToken = response.ablyToken
-    self.playerId = "client"
     self.connected = true
     
     print("OnlineClient: Joined room: " .. self.roomCode)
@@ -198,12 +192,8 @@ function OnlineClient:heartbeat()
     return success
 end
 
--- Publish a message to Ably
-function OnlineClient:publish(messageType, ...)
-    if not self.connected or not self.channelName or not self.ablyToken then
-        return false
-    end
-    
+-- Publish a message to Ably (lua-sec version)
+function OnlineClient:publishLuaSec(messageType, ...)
     local data = Protocol.encode(messageType, self.playerId, ...)
     
     local body = json.encode({
@@ -213,7 +203,7 @@ function OnlineClient:publish(messageType, ...)
     
     local url = string.format(
         "https://rest.ably.io/channels/%s/messages",
-        self.channelName:gsub(":", "%%3A") -- URL encode the channel name
+        self.channelName:gsub(":", "%%3A")
     )
     
     local response = {}
@@ -241,15 +231,72 @@ function OnlineClient:publish(messageType, ...)
     return true
 end
 
--- Poll for new messages from Ably
-function OnlineClient:poll()
-    local messages = {}
+-- Publish a message to Ably (curl version)
+function OnlineClient:publishCurl(messageType, ...)
+    local data = Protocol.encode(messageType, self.playerId, ...)
     
-    if not self.connected or not self.channelName or not self.ablyToken then
-        return messages
+    local body = json.encode({
+        name = "game_message",
+        data = data
+    })
+    
+    local url = string.format(
+        "https://rest.ably.io/channels/%s/messages",
+        self.channelName:gsub(":", "%%3A")
+    )
+    
+    -- Use SimpleHTTP but with custom headers for Authorization
+    local tempFile = os.tmpname()
+    local tempStatusFile = os.tmpname()
+    local tempBodyFile = os.tmpname()
+    
+    local f = io.open(tempBodyFile, "w")
+    f:write(body)
+    f:close()
+    
+    local cmd = string.format(
+        "curl -s -X POST -H 'Content-Type: application/json' -H 'Authorization: Bearer %s' -d @%s '%s' -o %s -w '%%{http_code}' > %s 2>/dev/null",
+        self.ablyToken, tempBodyFile, url, tempFile, tempStatusFile
+    )
+    
+    os.execute(cmd)
+    
+    -- Read status
+    local statusFile = io.open(tempStatusFile, "r")
+    local httpCode = statusFile and statusFile:read("*a"):match("(%d+)") or "500"
+    if statusFile then statusFile:close() end
+    
+    -- Cleanup
+    os.remove(tempFile)
+    os.remove(tempStatusFile)
+    os.remove(tempBodyFile)
+    
+    local code = tonumber(httpCode) or 500
+    if code >= 400 then
+        print("OnlineClient: Failed to publish message, code: " .. tostring(code))
+        return false
     end
     
-    -- Use Ably history API to get recent messages
+    return true
+end
+
+-- Publish a message to Ably
+function OnlineClient:publish(messageType, ...)
+    if not self.connected or not self.channelName or not self.ablyToken then
+        return false
+    end
+    
+    if self.httpMethod == "luasec" then
+        return self:publishLuaSec(messageType, ...)
+    else
+        return self:publishCurl(messageType, ...)
+    end
+end
+
+-- Poll for new messages from Ably (lua-sec version)
+function OnlineClient:pollLuaSec()
+    local messages = {}
+    
     local url = string.format(
         "https://rest.ably.io/channels/%s/messages?limit=100&start=%d",
         self.channelName:gsub(":", "%%3A"),
@@ -271,7 +318,6 @@ function OnlineClient:poll()
     local ok, code = https.request(request)
     
     if not ok or code >= 400 then
-        -- Not a critical error, just no new messages
         return messages
     end
     
@@ -285,20 +331,113 @@ function OnlineClient:poll()
     -- Process messages
     for _, item in ipairs(data.items) do
         if item.data and item.id then
-            -- Skip our own messages
             local msg = Protocol.decode(item.data)
+            print("OnlineClient: Received message type=" .. tostring(msg.type) .. " from=" .. tostring(msg.id) .. " self=" .. tostring(self.playerId))
             if msg.id ~= self.playerId then
+                -- Translate protocol types to match LAN behavior
+                if msg.type == Protocol.MSG.PLAYER_JOIN then 
+                    print("OnlineClient: Translating 'join' to 'player_joined'")
+                    msg.type = "player_joined"
+                elseif msg.type == Protocol.MSG.PLAYER_LEAVE then 
+                    msg.type = "player_left"
+                end
                 table.insert(messages, msg)
+            else
+                print("OnlineClient: Ignoring message from self")
             end
             
-            -- Update last message time
             if item.timestamp and item.timestamp > self.lastMessageTime then
                 self.lastMessageTime = item.timestamp
             end
         end
     end
     
+    if #messages > 0 then
+        print("OnlineClient: Returning " .. #messages .. " messages")
+    end
+    
     return messages
+end
+
+-- Poll for new messages from Ably (curl version)
+function OnlineClient:pollCurl()
+    local messages = {}
+    
+    local url = string.format(
+        "https://rest.ably.io/channels/%s/messages?limit=100&start=%d",
+        self.channelName:gsub(":", "%%3A"),
+        self.lastMessageTime
+    )
+    
+    local tempFile = os.tmpname()
+    
+    local cmd = string.format(
+        "curl -s -H 'Authorization: Bearer %s' '%s' -o %s 2>/dev/null",
+        self.ablyToken, url, tempFile
+    )
+    
+    os.execute(cmd)
+    
+    local f = io.open(tempFile, "r")
+    if not f then
+        os.remove(tempFile)
+        return messages
+    end
+    
+    local responseBody = f:read("*a")
+    f:close()
+    os.remove(tempFile)
+    
+    local success, data = pcall(json.decode, responseBody)
+    
+    if not success or not data or not data.items then
+        return messages
+    end
+    
+    -- Process messages
+    for _, item in ipairs(data.items) do
+        if item.data and item.id then
+            local msg = Protocol.decode(item.data)
+            print("OnlineClient: Received message type=" .. tostring(msg.type) .. " from=" .. tostring(msg.id) .. " self=" .. tostring(self.playerId))
+            if msg.id ~= self.playerId then
+                -- Translate protocol types to match LAN behavior
+                if msg.type == Protocol.MSG.PLAYER_JOIN then 
+                    print("OnlineClient: Translating 'join' to 'player_joined'")
+                    msg.type = "player_joined"
+                elseif msg.type == Protocol.MSG.PLAYER_LEAVE then 
+                    msg.type = "player_left"
+                end
+                table.insert(messages, msg)
+            else
+                print("OnlineClient: Ignoring message from self")
+            end
+            
+            if item.timestamp and item.timestamp > self.lastMessageTime then
+                self.lastMessageTime = item.timestamp
+            end
+        end
+    end
+    
+    if #messages > 0 then
+        print("OnlineClient: Returning " .. #messages .. " messages")
+    end
+    
+    return messages
+end
+
+-- Poll for new messages from Ably
+function OnlineClient:poll()
+    local messages = {}
+    
+    if not self.connected or not self.channelName or not self.ablyToken then
+        return messages
+    end
+    
+    if self.httpMethod == "luasec" then
+        return self:pollLuaSec()
+    else
+        return self:pollCurl()
+    end
 end
 
 -- Compatible interface with ENet client

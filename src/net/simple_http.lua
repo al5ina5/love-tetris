@@ -34,19 +34,24 @@ end
 -- Make HTTP request using curl
 function SimpleHTTP.requestWithCurl(method, url, body, headers)
     local tempFile = os.tmpname()
+    local tempStatusFile = os.tmpname()
     local tempBodyFile = nil
     
     -- Build curl command
-    local cmd = "curl -s -w '\\n%{http_code}' -X " .. method
+    -- Write status code to separate file for reliable parsing
+    local cmd = "curl -s -X " .. method
     
-    -- Add headers
+    -- Add headers FIRST (especially Content-Type must come before -d)
     if headers then
         for key, value in pairs(headers) do
-            cmd = cmd .. string.format(" -H '%s: %s'", key, value)
+            -- Only add Content-Type if we have a body
+            if key ~= "Content-Type" or body then
+                cmd = cmd .. string.format(" -H '%s: %s'", key, value)
+            end
         end
     end
     
-    -- Add body for POST requests
+    -- Add body for POST requests AFTER headers
     if body then
         tempBodyFile = os.tmpname()
         local f = io.open(tempBodyFile, "w")
@@ -57,13 +62,23 @@ function SimpleHTTP.requestWithCurl(method, url, body, headers)
         end
     end
     
-    -- Add URL and output file
-    cmd = cmd .. " '" .. url .. "' -o " .. tempFile .. " 2>/dev/null"
+    -- Add URL and output files
+    cmd = cmd .. " '" .. url .. "' -o " .. tempFile .. " -w '%{http_code}' > " .. tempStatusFile .. " 2>/dev/null"
     
     -- Execute command
     local result = os.execute(cmd)
     
-    -- Read response
+    -- Read HTTP status code
+    local statusFile = io.open(tempStatusFile, "r")
+    local httpCode = "500"
+    if statusFile then
+        local statusContent = statusFile:read("*a")
+        statusFile:close()
+        httpCode = statusContent:match("(%d+)") or "500"
+    end
+    os.remove(tempStatusFile)
+    
+    -- Read response body
     local f = io.open(tempFile, "r")
     if not f then
         if tempBodyFile then os.remove(tempBodyFile) end
@@ -71,15 +86,8 @@ function SimpleHTTP.requestWithCurl(method, url, body, headers)
         return false, "Failed to read response"
     end
     
-    local content = f:read("*a")
+    local responseBody = f:read("*a")
     f:close()
-    
-    -- Parse response (last line is HTTP code)
-    local responseBody, httpCode = content:match("^(.-)%s*(%d+)%s*$")
-    if not httpCode then
-        responseBody = content
-        httpCode = "500"
-    end
     
     -- Cleanup temp files
     os.remove(tempFile)

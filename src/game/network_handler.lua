@@ -7,6 +7,7 @@ local Audio = require('src.audio')
 local NetworkHandler = {}
 
 function NetworkHandler.handleMessage(msg, game)
+    print("NetworkHandler: Received message type: " .. tostring(msg.type) .. " from " .. tostring(msg.id))
     if msg.type == "player_joined" then
         NetworkHandler.handlePlayerJoined(msg, game)
     elseif msg.type == Protocol.MSG.START_COUNTDOWN then
@@ -23,6 +24,8 @@ function NetworkHandler.handleMessage(msg, game)
         NetworkHandler.handleGarbage(msg, game)
     elseif msg.type == "player_left" then
         NetworkHandler.handlePlayerLeft(msg, game)
+    else
+        print("NetworkHandler: Unknown message type: " .. tostring(msg.type))
     end
 end
 

@@ -121,6 +121,8 @@ function Menu:keypressed(key, game)
         handled = OnlineScreens.handleJoinKey(self, key, game)
     elseif self.state == Menu.STATE.ONLINE_BROWSE then
         handled = OnlineScreens.handleBrowseKey(self, key, game)
+    elseif self.state == Menu.STATE.ONLINE_WAITING then
+        handled = OnlineScreens.handleWaitingKey(self, key, game)
     end
     
     -- Handle text input and backspace for online screens
@@ -157,6 +159,8 @@ function Menu:gamepadpressed(button, game)
         handled = IPInput.handleGamepad(self, button)
     elseif self.state == Menu.STATE.CONNECTING then
         handled = WaitingScreens.handleConnectingGamepad(self, button)
+    elseif self.state == Menu.STATE.ONLINE_WAITING then
+        handled = OnlineScreens.handleWaitingGamepad(self, button, game)
     end
 
     if handled then
