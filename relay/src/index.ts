@@ -129,7 +129,7 @@ const tcpServer = net.createServer((socket: net.Socket) => {
         continue;
       }
 
-      -- Forward data to others in the same room
+      // Forward data to others in the same room
       if (currentRoomCode) {
         const roomData = roomSockets.get(currentRoomCode);
         if (roomData) {
