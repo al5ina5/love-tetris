@@ -141,10 +141,11 @@ end
 
 function Renderer.drawGameplay(state, game, sw, sh)
     local hasOpponents = game:countRemotePlayers() > 0
+    local isNetworked = game.network ~= nil
     local bsW, bsH = 16, 11
     local bw, bh = 10 * bsW, 20 * bsH
     
-    if not hasOpponents then
+    if not hasOpponents and not isNetworked then
         -- Single player layout
         local bx = (sw - bw) / 2
         local by = 0
@@ -192,6 +193,12 @@ function Renderer.drawGameplay(state, game, sw, sh)
             count = count + 1
         end
         
+        -- If networked but no board data yet, show a placeholder label
+        if count == 0 and isNetworked then
+            love.graphics.setFont(state.fonts.small)
+            Renderer.drawText("WAITING FOR HOST...", sw * 0.75, sh / 2, sw / 2, "center", {0.5, 0.5, 0.5})
+        end
+        
         -- Vertical divider
         love.graphics.setColor(0.3, 0.3, 0.3)
         love.graphics.line(sw / 2, 0, sw / 2, sh)
@@ -209,10 +216,11 @@ end
 
 function Renderer.drawGameUI(state, game, sw, sh)
     local hasOpponents = game:countRemotePlayers() > 0
+    local isNetworked = game.network ~= nil
     local bsW, bsH = 16, 11
     local bw, bh = 10 * bsW, 20 * bsH
     
-    if not hasOpponents then
+    if not hasOpponents and not isNetworked then
         -- Single player UI
         local bx = (sw - bw) / 2
         love.graphics.setFont(state.fonts.score)
@@ -243,17 +251,17 @@ function Renderer.drawGameUI(state, game, sw, sh)
     else
         -- Multiplayer UI
         love.graphics.setFont(state.fonts.score)
-        Renderer.drawText(tostring(game.localBoard.score), 0, bh + 2, sw / 2, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
+        Renderer.drawText(tostring(game.localBoard.score), 0, bh - 15, sw / 2, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
         
         if game.localBoard.pendingGarbage > 0 then
             love.graphics.setFont(state.fonts.small)
-            Renderer.drawText("GARBAGE: " .. game.localBoard.pendingGarbage, 0, bh - 10, sw / 2, "center", {1, 0, 0})
+            Renderer.drawText("GARBAGE: " .. game.localBoard.pendingGarbage, 0, bh - 25, sw / 2, "center", {1, 0, 0})
         end
         
         local count = 0
         for id, board in pairs(game.remoteBoards) do
             if count == 0 then
-                Renderer.drawText(tostring(board.score or 0), sw / 2, bh + 2, sw / 2, "center", {0.8, 0.8, 0.8})
+                Renderer.drawText(tostring(board.score or 0), sw / 2, bh - 15, sw / 2, "center", {0.8, 0.8, 0.8})
             end
             count = count + 1
         end

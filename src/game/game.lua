@@ -35,7 +35,9 @@ local Game = {
     -- Sub-modules
     renderer = nil,
     stateManager = nil,
-    connectionManager = nil
+    connectionManager = nil,
+    latency = 0,
+    pingTimer = 0
 }
 
 -- Expose state for convenience

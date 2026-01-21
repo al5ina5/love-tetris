@@ -11,6 +11,7 @@ local Options = require('src.ui.menu.options_screen')
 local Stats = require('src.ui.menu.stats_screen')
 local ControlsUI = require('src.ui.menu.controls_screen')
 local OnlineScreens = require('src.ui.menu.online_screens')
+local RoomCodeInput = require('src.ui.menu.room_code_input')
 
 local Menu = {}
 Menu.__index = Menu
@@ -22,9 +23,11 @@ function Menu:new(discovery, fonts)
     local menu = Base.create(discovery, fonts)
     setmetatable(menu, Menu)
     
-    -- Initialize sub-menus
+    -- Initialize sub-menus with digit pickers
     Options.init(menu)
     ControlsUI.init(menu)
+    RoomCodeInput.init(menu)
+    IPInput.init(menu)
     
     return menu
 end
@@ -87,6 +90,8 @@ function Menu:drawForeground(game)
         OnlineScreens.drawBrowse(self, sw, sh, game)
     elseif self.state == Menu.STATE.ONLINE_WAITING then
         OnlineScreens.drawWaiting(self, sw, sh, game)
+    elseif self.state == Menu.STATE.ROOM_CODE_INPUT then
+        RoomCodeInput.draw(self, sw, sh, game)
     end
 
     love.graphics.setColor(1, 1, 1)
@@ -123,6 +128,8 @@ function Menu:keypressed(key, game)
         handled = OnlineScreens.handleBrowseKey(self, key, game)
     elseif self.state == Menu.STATE.ONLINE_WAITING then
         handled = OnlineScreens.handleWaitingKey(self, key, game)
+    elseif self.state == Menu.STATE.ROOM_CODE_INPUT then
+        handled = RoomCodeInput.handleKey(self, key)
     end
     
     -- Handle text input and backspace for online screens
@@ -161,6 +168,8 @@ function Menu:gamepadpressed(button, game)
         handled = WaitingScreens.handleConnectingGamepad(self, button)
     elseif self.state == Menu.STATE.ONLINE_WAITING then
         handled = OnlineScreens.handleWaitingGamepad(self, button, game)
+    elseif self.state == Menu.STATE.ROOM_CODE_INPUT then
+        handled = RoomCodeInput.handleGamepad(self, button)
     end
 
     if handled then

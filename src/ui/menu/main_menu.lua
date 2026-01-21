@@ -234,9 +234,7 @@ function MainMenu.select(menu, game)
         elseif menu.selectedIndex == 2 then
             -- Join with Code
             if game then game.gameMode = "VERSUS" end
-            menu.state = Base.STATE.ONLINE_JOIN
-            menu.selectedIndex = 1
-            menu.roomCode = ""
+            menu.state = Base.STATE.ROOM_CODE_INPUT
         elseif menu.selectedIndex == 3 then
             -- Browse Online Games
             if game then game.gameMode = "VERSUS" end

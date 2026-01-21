@@ -7,18 +7,17 @@ local Input = require('src.input.input_state')
 local InputHandler = {}
 
 function InputHandler.keypressed(key, game)
+    -- Update input state first so Controls can check it
+    Input:keyPressed(key)
+    
     if game.menu:isVisible() then
         if game.menu:keypressed(key, game) then return end
     end
     
-    -- Check pause action
-    if Controls.isActionPressed("pause", Input) or key == "m" then
+    -- Check pause action through Controls system only
+    if Controls.isActionPressed("pause", Input) then
         InputHandler.handlePause(game)
-    elseif key == "f" then
-        love.window.setFullscreen(not love.window.getFullscreen())
     end
-    
-    Input:keyPressed(key)
 end
 
 function InputHandler.keyreleased(key, game)
@@ -26,16 +25,17 @@ function InputHandler.keyreleased(key, game)
 end
 
 function InputHandler.gamepadpressed(button, game)
+    -- Update input state first so Controls can check it
+    Input:gamepadPressed(button)
+    
     if game.menu:isVisible() then
         if game.menu:gamepadpressed(button, game) then return end
     end
     
-    -- Check pause action
-    if Controls.isActionPressed("pause", Input) or button == "start" then
+    -- Check pause action through Controls system only
+    if Controls.isActionPressed("pause", Input) then
         InputHandler.handlePause(game)
     end
-
-    Input:gamepadPressed(button)
 end
 
 function InputHandler.gamepadreleased(button, game)

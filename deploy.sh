@@ -8,7 +8,7 @@ echo "=== Building $GAME_NAME ==="
 ./build_portmaster.sh
 
 # --- Target 1: SpruceOS (handheld) ---
-SPRUCE_IP="10.0.0.93"
+SPRUCE_IP="10.0.0.94"
 SPRUCE_USER="spruce"
 SPRUCE_PASS="happygaming"
 SPRUCE_PATH="/mnt/sdcard/Roms/PORTS"

@@ -25,6 +25,7 @@ Base.STATE = {
     ONLINE_JOIN = "online_join",
     ONLINE_BROWSE = "online_browse",
     ONLINE_WAITING = "online_waiting",
+    ROOM_CODE_INPUT = "room_code_input",
 }
 
 function Base.create(discovery, fonts)

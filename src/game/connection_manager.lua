@@ -218,8 +218,10 @@ function ConnectionManager.joinOnline(roomCode, game)
     local Protocol = require('src.net.protocol')
     relayClient:send(Protocol.encode(Protocol.MSG.PLAYER_JOIN, "client"))
     
-    -- Hide menu and wait for host to start countdown (same as LAN)
-    game.menu:hide()
+    -- Switch menu to connecting state instead of hiding immediately
+    -- This prevents the solo-flash and looks more professional
+    local Base = require('src.ui.menu.base')
+    game.menu.state = Base.STATE.CONNECTING
     game.stateManager.current = "waiting"
     
     return true
@@ -258,6 +260,19 @@ function ConnectionManager.updateOnline(dt, game)
         if cm.heartbeatTimer >= cm.heartbeatInterval then
             cm.onlineClient:heartbeat()
             cm.heartbeatTimer = 0
+        end
+    end
+
+    -- Send periodic PING to measure latency
+    if game.network and game.state == "waiting" then
+        game.pingTimer = game.pingTimer + dt
+        if game.pingTimer >= 2.0 then -- Every 2 seconds
+            local Protocol = require('src.net.protocol')
+            game.network:sendMessage({
+                type = Protocol.MSG.PING,
+                data = tostring(love.timer.getTime())
+            })
+            game.pingTimer = 0
         end
     end
 end

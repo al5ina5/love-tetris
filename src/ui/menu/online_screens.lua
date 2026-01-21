@@ -33,21 +33,21 @@ function OnlineScreens.drawHost(menu, sw, sh, game)
         return
     end
     
-    -- Public/Private toggle
-    local y = 90
-    local visibility = menu.isPublicRoom and "PUBLIC" or "PRIVATE"
-    if menu.selectedIndex == 1 then
-        game:drawText("> Visibility: " .. visibility, 0, y, sw, "center", {1, 1, 0.5})
-    else
-        game:drawText("  Visibility: " .. visibility, 0, y, sw, "center", {0.8, 0.8, 0.8})
-    end
-    
     -- Create button
-    y = y + 20
-    if menu.selectedIndex == 2 then
+    local y = 90
+    if menu.selectedIndex == 1 then
         game:drawText("> CREATE ROOM", 0, y, sw, "center", {1, 1, 0.5})
     else
         game:drawText("  CREATE ROOM", 0, y, sw, "center", {0.8, 0.8, 0.8})
+    end
+    
+    -- Public/Private toggle
+    y = y + 20
+    local visibility = menu.isPublicRoom and "PUBLIC" or "PRIVATE"
+    if menu.selectedIndex == 2 then
+        game:drawText("> Visibility: " .. visibility, 0, y, sw, "center", {1, 1, 0.5})
+    else
+        game:drawText("  Visibility: " .. visibility, 0, y, sw, "center", {0.8, 0.8, 0.8})
     end
     
     -- Back button
@@ -158,7 +158,7 @@ function OnlineScreens.drawBrowse(menu, sw, sh, game)
     else
         for i, room in ipairs(menu.onlineRooms) do
             local roomText = string.format("Room %s (%d/%d)", 
-                room.roomCode, room.players, room.maxPlayers)
+                room.code, room.players, room.maxPlayers)
             if menu.selectedIndex == i then
                 game:drawText("> " .. roomText, 0, y, sw, "center", {1, 1, 0.5})
             else
@@ -229,14 +229,14 @@ function OnlineScreens.handleHostKey(menu, key, game)
         return true
     elseif key == "return" or key == "space" or key == "x" then
         if menu.selectedIndex == 1 then
-            -- Toggle public/private
-            menu.isPublicRoom = not menu.isPublicRoom
-            return true
-        elseif menu.selectedIndex == 2 then
             -- Create room
             if menu.onHostOnline then
                 menu.onHostOnline(menu.isPublicRoom)
             end
+            return true
+        elseif menu.selectedIndex == 2 then
+            -- Toggle public/private
+            menu.isPublicRoom = not menu.isPublicRoom
             return true
         elseif menu.selectedIndex == 3 then
             -- Back
@@ -328,7 +328,7 @@ function OnlineScreens.handleBrowseKey(menu, key, game)
             local roomIndex = menu.selectedIndex
             if menu.onlineRooms[roomIndex] then
                 if menu.onJoinOnline then
-                    menu.onJoinOnline(menu.onlineRooms[roomIndex].roomCode)
+                    menu.onJoinOnline(menu.onlineRooms[roomIndex].code)
                 end
             end
             return true

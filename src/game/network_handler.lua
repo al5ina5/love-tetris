@@ -22,6 +22,22 @@ function NetworkHandler.handleMessage(msg, game)
         NetworkHandler.handleGameOver(msg, game)
     elseif msg.type == Protocol.MSG.GARBAGE then
         NetworkHandler.handleGarbage(msg, game)
+    elseif msg.type == Protocol.MSG.PING then
+        -- Reply with PONG and the same timestamp
+        if game.network then
+            game.network:sendMessage({
+                type = Protocol.MSG.PONG,
+                data = tostring(msg.timestamp)
+            })
+        end
+    elseif msg.type == Protocol.MSG.PONG then
+        -- Calculate RTT
+        if msg.timestamp and msg.timestamp > 0 then
+            local rtt = love.timer.getTime() - msg.timestamp
+            -- Rolling average for smoothness
+            game.latency = (game.latency * 0.8) + (rtt * 0.2)
+            print(string.format("Network: Measured RTT: %.1fms (compensated: %.1fms)", rtt * 1000, (game.latency / 2) * 1000))
+        end
     elseif msg.type == "player_left" then
         NetworkHandler.handlePlayerLeft(msg, game)
     else
@@ -35,6 +51,17 @@ function NetworkHandler.handlePlayerJoined(msg, game)
     game.remoteBoards[msg.id] = TetrisBoard:new(10, 20)
     game.remoteBoards[msg.id].currentPiece = nil
     print("Network: Added remote board for " .. msg.id .. " (now " .. game:countRemotePlayers() .. " remote players)")
+
+    -- If we are the host, tell the new player that we are here too
+    if game.isHost and game.network and msg.id ~= "host" then
+        game.network:sendMessage({type = Protocol.MSG.PLAYER_JOIN})
+    end
+
+    -- If we are the client and just discovered the host, hide the "Connecting..." menu
+    -- so we can see the split-screen layout with "WAITING FOR HOST..."
+    if not game.isHost and game.menu:isVisible() then
+        game.menu:hide()
+    end
 end
 
 function NetworkHandler.handleStartCountdown(msg, game)
@@ -44,8 +71,18 @@ function NetworkHandler.handleStartCountdown(msg, game)
             StateManager.reset(game.stateManager, game)
         end
         game.stateManager.current = "countdown"
-        game.stateManager.countdownTimer = 3.0
+        
+        -- Apply latency compensation: subtract one-way trip time (RTT / 2)
+        local compensation = game.latency / 2
+        game.stateManager.countdownTimer = 3.0 - compensation
+        
+        print(string.format("Network: Starting countdown with %.1fms compensation", compensation * 1000))
         Audio:play('beep')
+
+        -- Hide menu if it's still visible (important for online clients)
+        if game.menu:isVisible() then
+            game.menu:hide()
+        end
     end
 end
 

@@ -91,8 +91,8 @@ Constants.WALL_KICKS_I = {
 }
 
 -- Online multiplayer API endpoint
-Constants.API_BASE_URL = "https://your-railway-app.up.railway.app"
-Constants.RELAY_HOST = "your-railway-app.up.railway.app" 
-Constants.RELAY_PORT = 12346
+Constants.API_BASE_URL = "https://sirtet-multiplayer-production.up.railway.app"
+Constants.RELAY_HOST = "turntable.proxy.rlwy.net" 
+Constants.RELAY_PORT = 32378
 
 return Constants

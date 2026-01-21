@@ -27,11 +27,8 @@ const roomSockets = new Map<string, RoomData>();
 
 // --- Helper: Generate Room Code ---
 function generateRoomCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  // Generate 6-digit numeric code (100000-999999) for easier gamepad input
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
   return code;
 }
 

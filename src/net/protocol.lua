@@ -66,10 +66,12 @@ function Protocol.decode(data)
         msg.lines = tonumber(parts[3]) or 0
 
     elseif msgType == Protocol.MSG.PING then
-        msg.timestamp = tonumber(parts[2]) or 0
+        msg.id = parts[2]
+        msg.timestamp = tonumber(parts[3]) or 0
         
     elseif msgType == Protocol.MSG.PONG then
-        msg.timestamp = tonumber(parts[2]) or 0
+        msg.id = parts[2]
+        msg.timestamp = tonumber(parts[3]) or 0
     end
     
     return msg
