@@ -8,7 +8,7 @@ function OnlineScreens.drawHost(menu, sw, sh, game)
     local Base = require('src.ui.menu.base')
     
     if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-    game:drawText("HOST ONLINE", 0, 60, sw, "center", {1, 1, 1})
+    game:drawText("HOST ONLINE", 0, 120, sw, "center", {1, 1, 1})
     
     -- Show error if any
     if menu.onlineError then
@@ -17,24 +17,24 @@ function OnlineScreens.drawHost(menu, sw, sh, game)
         for line in menu.onlineError:gmatch("[^\n]+") do
             table.insert(errorLines, line)
         end
-        local y = 90
+        local y = 180
         for _, line in ipairs(errorLines) do
             game:drawText(line, 0, y, sw, "center", {1, 0.5, 0.5})
-            y = y + 12
+            y = y + 24
         end
         
         -- Only show back button when there's an error
-        y = y + 10
+        y = y + 20
         if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
         game:drawText("> BACK", 0, y, sw, "center", {1, 1, 0.5})
         
         if menu.fonts then love.graphics.setFont(menu.fonts.small) end
-        game:drawText("See docs/HTTPS_SETUP.md for help", 0, sh - 30, sw, "center", {0.6, 0.6, 0.6})
+        game:drawText("See docs/HTTPS_SETUP.md for help", 0, sh - 60, sw, "center", {0.6, 0.6, 0.6})
         return
     end
     
     -- Create button
-    local y = 90
+    local y = 180
     if menu.selectedIndex == 1 then
         game:drawText("> CREATE ROOM", 0, y, sw, "center", {1, 1, 0.5})
     else
@@ -42,7 +42,7 @@ function OnlineScreens.drawHost(menu, sw, sh, game)
     end
     
     -- Public/Private toggle
-    y = y + 20
+    y = y + 40
     local visibility = menu.isPublicRoom and "PUBLIC" or "PRIVATE"
     if menu.selectedIndex == 2 then
         game:drawText("> Visibility: " .. visibility, 0, y, sw, "center", {1, 1, 0.5})
@@ -51,7 +51,7 @@ function OnlineScreens.drawHost(menu, sw, sh, game)
     end
     
     -- Back button
-    y = y + 20
+    y = y + 40
     if menu.selectedIndex == 3 then
         game:drawText("> BACK", 0, y, sw, "center", {1, 1, 0.5})
     else
@@ -64,7 +64,7 @@ function OnlineScreens.drawJoin(menu, sw, sh, game)
     local Base = require('src.ui.menu.base')
     
     if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-    game:drawText("JOIN ONLINE", 0, 60, sw, "center", {1, 1, 1})
+    game:drawText("JOIN ONLINE", 0, 120, sw, "center", {1, 1, 1})
     
     -- Show error if any
     if menu.onlineError then
@@ -73,24 +73,24 @@ function OnlineScreens.drawJoin(menu, sw, sh, game)
         for line in menu.onlineError:gmatch("[^\n]+") do
             table.insert(errorLines, line)
         end
-        local y = 90
+        local y = 180
         for _, line in ipairs(errorLines) do
             game:drawText(line, 0, y, sw, "center", {1, 0.5, 0.5})
-            y = y + 12
+            y = y + 24
         end
         
         -- Only show back button when there's an error
-        y = y + 10
+        y = y + 20
         if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
         game:drawText("> BACK", 0, y, sw, "center", {1, 1, 0.5})
         
         if menu.fonts then love.graphics.setFont(menu.fonts.small) end
-        game:drawText("See docs/HTTPS_SETUP.md for help", 0, sh - 30, sw, "center", {0.6, 0.6, 0.6})
+        game:drawText("See docs/HTTPS_SETUP.md for help", 0, sh - 60, sw, "center", {0.6, 0.6, 0.6})
         return
     end
     
     -- Room code input
-    local y = 90
+    local y = 180
     local codeText = menu.roomCode ~= "" and menu.roomCode or "______"
     if menu.selectedIndex == 1 then
         game:drawText("> Code: " .. codeText, 0, y, sw, "center", {1, 1, 0.5})
@@ -99,7 +99,7 @@ function OnlineScreens.drawJoin(menu, sw, sh, game)
     end
     
     -- Join button
-    y = y + 20
+    y = y + 40
     if menu.selectedIndex == 2 then
         game:drawText("> JOIN ROOM", 0, y, sw, "center", {1, 1, 0.5})
     else
@@ -107,7 +107,7 @@ function OnlineScreens.drawJoin(menu, sw, sh, game)
     end
     
     -- Back button
-    y = y + 20
+    y = y + 40
     if menu.selectedIndex == 3 then
         game:drawText("> BACK", 0, y, sw, "center", {1, 1, 0.5})
     else
@@ -117,7 +117,7 @@ function OnlineScreens.drawJoin(menu, sw, sh, game)
     -- Instructions
     if menu.fonts then love.graphics.setFont(menu.fonts.small) end
     if menu.selectedIndex == 1 and not menu.onlineError then
-        game:drawText("Type the 6-character room code", 0, sh - 30, sw, "center", {0.6, 0.6, 0.6})
+        game:drawText("Type the 6-character room code", 0, sh - 60, sw, "center", {0.6, 0.6, 0.6})
     end
 end
 
@@ -126,9 +126,9 @@ function OnlineScreens.drawBrowse(menu, sw, sh, game)
     local Base = require('src.ui.menu.base')
     
     if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-    game:drawText("BROWSE GAMES", 0, 30, sw, "center", {1, 1, 1})
+    game:drawText("BROWSE GAMES", 0, 60, sw, "center", {1, 1, 1})
     
-    local y = 60
+    local y = 120
     
     -- Show error if any
     if menu.onlineError then
@@ -139,22 +139,22 @@ function OnlineScreens.drawBrowse(menu, sw, sh, game)
         end
         for _, line in ipairs(errorLines) do
             game:drawText(line, 0, y, sw, "center", {1, 0.5, 0.5})
-            y = y + 12
+            y = y + 24
         end
         
         -- Show back button when there's an error
-        y = y + 10
+        y = y + 20
         if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
         game:drawText("> BACK", 0, y, sw, "center", {1, 1, 0.5})
         
         if menu.fonts then love.graphics.setFont(menu.fonts.small) end
-        game:drawText("See docs/HTTPS_SETUP.md for help", 0, sh - 30, sw, "center", {0.6, 0.6, 0.6})
+        game:drawText("See docs/HTTPS_SETUP.md for help", 0, sh - 60, sw, "center", {0.6, 0.6, 0.6})
         return
     end
     
     -- Room list
     if #menu.onlineRooms == 0 then
-        game:drawText("No public games found", 0, y + 20, sw, "center", {0.6, 0.6, 0.6})
+        game:drawText("No public games found", 0, y + 40, sw, "center", {0.6, 0.6, 0.6})
     else
         for i, room in ipairs(menu.onlineRooms) do
             local roomText = string.format("Room %s (%d/%d)", 
@@ -164,12 +164,12 @@ function OnlineScreens.drawBrowse(menu, sw, sh, game)
             else
                 game:drawText("  " .. roomText, 0, y, sw, "center", {0.8, 0.8, 0.8})
             end
-            y = y + 15
+            y = y + 30
         end
     end
     
     -- Refresh button
-    y = math.max(y, 100)
+    y = math.max(y, 200)
     local refreshIndex = #menu.onlineRooms + 1
     if menu.selectedIndex == refreshIndex then
         game:drawText("> REFRESH", 0, y, sw, "center", {1, 1, 0.5})
@@ -178,7 +178,7 @@ function OnlineScreens.drawBrowse(menu, sw, sh, game)
     end
     
     -- Back button
-    y = y + 15
+    y = y + 30
     local backIndex = #menu.onlineRooms + 2
     if menu.selectedIndex == backIndex then
         game:drawText("> BACK", 0, y, sw, "center", {1, 1, 0.5})
@@ -190,20 +190,20 @@ end
 -- Draw online waiting screen
 function OnlineScreens.drawWaiting(menu, sw, sh, game)
     if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-    game:drawText("WAITING FOR PLAYER", 0, 50, sw, "center", {1, 1, 1})
+    game:drawText("WAITING FOR PLAYER", 0, 100, sw, "center", {1, 1, 1})
     
     -- Show room code with better spacing
     if menu.onlineRoomCode then
         if menu.fonts then love.graphics.setFont(menu.fonts.small) end
-        game:drawText("Room Code", 0, 85, sw, "center", {0.8, 0.8, 0.8})
+        game:drawText("Room Code", 0, 170, sw, "center", {0.8, 0.8, 0.8})
         
         if menu.fonts then love.graphics.setFont(menu.fonts.large) end
-        game:drawText(menu.onlineRoomCode, 0, 105, sw, "center", {1, 1, 0.5})
+        game:drawText(menu.onlineRoomCode, 0, 210, sw, "center", {1, 1, 0.5})
     end
     
     if menu.fonts then love.graphics.setFont(menu.fonts.small) end
-    game:drawText("Share this code with your opponent", 0, 145, sw, "center", {0.6, 0.6, 0.6})
-    game:drawText("Press ESC to cancel", 0, sh - 30, sw, "center", {0.6, 0.6, 0.6})
+    game:drawText("Share this code with your opponent", 0, 290, sw, "center", {0.6, 0.6, 0.6})
+    game:drawText("Press ESC to cancel", 0, sh - 60, sw, "center", {0.6, 0.6, 0.6})
 end
 
 -- Handle keyboard input for online host screen

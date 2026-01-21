@@ -20,8 +20,8 @@ function RoomCodeInput.draw(menu, sw, sh, game)
     
     -- Instructions
     if menu.fonts then love.graphics.setFont(menu.fonts.small) end
-    game:drawText("Use D-PAD to enter 6-digit code", 0, sh - 50, sw, "center", {0.6, 0.6, 0.6})
-    game:drawText("A/ENTER to JOIN  •  B/ESC to BACK", 0, sh - 30, sw, "center", {0.6, 0.6, 0.6})
+    game:drawText("Use D-PAD to enter 6-digit code", 0, sh - 100, sw, "center", {0.6, 0.6, 0.6})
+    game:drawText("A/ENTER to JOIN  •  B/ESC to BACK", 0, sh - 60, sw, "center", {0.6, 0.6, 0.6})
 end
 
 function RoomCodeInput.handleKey(menu, key)

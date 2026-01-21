@@ -1,11 +1,11 @@
 function love.conf(t)
     t.window.title = "Sirtet"
-    t.window.width = 640   -- 320 * 2 for better visibility
-    t.window.height = 480  -- 240 * 2
+    t.window.width = 1280   -- 640 * 2 for better visibility
+    t.window.height = 960   -- 480 * 2
     t.window.vsync = 1
     t.window.resizable = true
-    t.window.minwidth = 320
-    t.window.minheight = 240
+    t.window.minwidth = 640
+    t.window.minheight = 480
     
     -- Game identity (for save files)
     t.identity = "sirtet"

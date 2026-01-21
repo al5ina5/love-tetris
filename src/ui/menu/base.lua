@@ -136,24 +136,24 @@ function Base.drawLinkMenu(menu, sw, sh, game, title, subtitle, options)
         if title == "SIRTET" then
             -- Main menu title - large font
             if menu.fonts then love.graphics.setFont(menu.fonts.large) end
-            game:drawText(title, 0, sh/2 - 65, sw, "center", {1, 1, 1}, {0.3, 0.3, 0.3})
+            game:drawText(title, 0, sh/2 - 130, sw, "center", {1, 1, 1}, {0.3, 0.3, 0.3})
         else
             -- Submenu titles - medium font
             if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-            game:drawText(title, 0, sh/2 - 65, sw, "center", {1, 1, 1})
+            game:drawText(title, 0, sh/2 - 130, sw, "center", {1, 1, 1})
         end
     end
 
     -- Subtitle (for main menu)
     if subtitle then
         if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-        game:drawText(subtitle, 0, sh/2 - 30, sw, "center", {0.7, 0.7, 0.7})
+        game:drawText(subtitle, 0, sh/2 - 60, sw, "center", {0.7, 0.7, 0.7})
     end
 
     -- Menu options - centered
     if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-    local y = sh/2 - 10
-    local spacing = 15
+    local y = sh/2 - 20
+    local spacing = 30
     
     for i, option in ipairs(options) do
         local color = {0.8, 0.8, 0.8}
@@ -178,12 +178,12 @@ function Base.drawList(menu, sw, sh, game, title, subtitle, options, startY)
         -- Content-heavy style (left-aligned, for options screens)
         if title then
             if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-            game:drawText(title, 0, 30, sw, "center", {1, 1, 1})
+            game:drawText(title, 0, 60, sw, "center", {1, 1, 1})
         end
 
         if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-        local y = startY or 60
-        local spacing = 18
+        local y = startY or 120
+        local spacing = 36
         
         for i, option in ipairs(options) do
             local color = {0.8, 0.8, 0.8}
@@ -193,7 +193,7 @@ function Base.drawList(menu, sw, sh, game, title, subtitle, options, startY)
                 text = "> " .. option
             end
             
-            game:drawText(text, 20, y, sw - 40, "left", color)
+            game:drawText(text, 40, y, sw - 80, "left", color)
             y = y + spacing
         end
     end

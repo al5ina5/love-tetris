@@ -7,11 +7,11 @@ local Components = {}
 function Components.drawDialog(game, sw, sh, title, message, options, selectedOption)
     -- Dim background
     love.graphics.setColor(0, 0, 0, 0.8)
-    love.graphics.rectangle("fill", sw/2 - 120, sh/2 - 60, 240, 120)
+    love.graphics.rectangle("fill", sw/2 - 240, sh/2 - 120, 480, 240)
     
     -- Border
     love.graphics.setColor(0.3, 0.3, 0.3)
-    love.graphics.rectangle("line", sw/2 - 120, sh/2 - 60, 240, 120)
+    love.graphics.rectangle("line", sw/2 - 240, sh/2 - 120, 480, 240)
     
     -- Title
     love.graphics.setFont(game.renderer.fonts.medium)

@@ -3,13 +3,13 @@
 
 local Constants = {}
 
-Constants.SW = 320
-Constants.SH = 240
+Constants.SW = 640
+Constants.SH = 480
 
 Constants.GRID_WIDTH = 10
 Constants.GRID_HEIGHT = 20
-Constants.BLOCK_SIZE_W = 16
-Constants.BLOCK_SIZE_H = 11
+Constants.BLOCK_SIZE_W = 32
+Constants.BLOCK_SIZE_H = 22
 
 Constants.PIECES = {
     I = {
@@ -94,5 +94,9 @@ Constants.WALL_KICKS_I = {
 Constants.API_BASE_URL = "https://sirtet-multiplayer-production.up.railway.app"
 Constants.RELAY_HOST = "turntable.proxy.rlwy.net" 
 Constants.RELAY_PORT = 32378
+
+-- Version and update info
+Constants.VERSION = "1.0.0"
+Constants.GITHUB_REPO = "al5ina5/love-tetris"
 
 return Constants

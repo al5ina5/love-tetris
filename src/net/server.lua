@@ -130,7 +130,7 @@ function Server:poll()
             if player then
                 print("Player " .. player.id .. " disconnected")
                 self:broadcast(Protocol.encode(Protocol.MSG.PLAYER_LEAVE, player.id), nil, true)
-                table.insert(messages, { type = "player_left", id = player.id })
+                table.insert(messages, { type = "player_left", id = player.id, disconnectReason = "opponent_left" })
                 self.players[event.peer] = nil
             end
         end

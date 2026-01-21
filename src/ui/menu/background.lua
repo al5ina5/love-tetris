@@ -10,13 +10,13 @@ function Background.init()
     local pieceTypes = {"I", "J", "L", "O", "S", "T", "Z"}
     
     for i = 1, 25 do
-        local sizeX, sizeY = 16, 11
+        local sizeX, sizeY = 32, 22
         local type = pieceTypes[love.math.random(#pieceTypes)]
         table.insert(blocks, {
             type = type,
             color = TetrisBoard.PIECES[type].color,
-            x = math.floor(love.math.random(0, 320 / sizeX)) * sizeX,
-            y = math.floor(love.math.random(-20, 240 / sizeY)) * sizeY,
+            x = math.floor(love.math.random(0, 640 / sizeX)) * sizeX,
+            y = math.floor(love.math.random(-20, 480 / sizeY)) * sizeY,
             speed = love.math.random(2, 6) * 0.1,
             moveTimer = 0,
             rotation = love.math.random(0, 3),
@@ -36,9 +36,9 @@ function Background.update(blocks, dt)
             block.moveTimer = 0
             block.y = block.y + block.sizeY
             
-            if block.y > 240 then
+            if block.y > 480 then
                 block.y = -block.sizeY * 4
-                block.x = math.floor(love.math.random(0, 320 / block.sizeX)) * block.sizeX
+                block.x = math.floor(love.math.random(0, 640 / block.sizeX)) * block.sizeX
                 block.speed = love.math.random(2, 6) * 0.1
                 block.opacity = love.math.random(15, 35) / 100
                 
@@ -53,7 +53,7 @@ end
 function Background.draw(blocks)
     -- Darken background
     love.graphics.setColor(0, 0, 0, 1.0)
-    love.graphics.rectangle("fill", 0, 0, 320, 240)
+    love.graphics.rectangle("fill", 0, 0, 640, 480)
     
     -- Draw falling blocks
     for _, block in ipairs(blocks) do

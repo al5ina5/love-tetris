@@ -97,7 +97,7 @@ function Client:poll()
             self.connected = false
             self.server = nil
             self.playerId = nil
-            table.insert(messages, { type = "player_left", id = "host" })
+            table.insert(messages, { type = "player_left", id = "host", disconnectReason = "connection_closed" })
         end
         event = self.host:service(0)
     end

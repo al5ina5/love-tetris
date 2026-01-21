@@ -58,7 +58,7 @@ end
 
 function Menu:drawForeground(game)
     if not self:isVisible() then return end
-    local sw, sh = 320, 240
+    local sw, sh = 640, 480
 
     if self.fonts then
         love.graphics.setFont(self.fonts.medium)

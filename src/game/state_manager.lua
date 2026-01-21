@@ -19,7 +19,8 @@ function StateManager.create()
         current = StateManager.STATES.WAITING,
         countdownTimer = 0,
         gameOverTimer = 0,
-        disconnectPauseTimer = 0
+        disconnectPauseTimer = 0,
+        disconnectReason = nil  -- "opponent_left", "connection_closed", etc.
     }
 end
 
@@ -99,6 +100,17 @@ function StateManager.updatePlaying(state, dt, game)
     -- Sprint mode
     if game.gameMode == "SPRINT" then
         game.sprintTime = game.sprintTime + dt
+        
+        -- Check for death first
+        if game.localBoard.gameOver then
+            StateManager.enterGameOver(state, game)
+            Audio:stopMusic()
+            Audio:play('gameOver')
+            Scores.addMatch("SPRINT", game.localBoard.score, game.sprintTime, "DEATH")
+            return
+        end
+        
+        -- Win condition: cleared 40 lines
         if game.localBoard.linesCleared >= 40 then
             StateManager.enterGameOver(state, game)
             Audio:stopMusic()
@@ -127,10 +139,23 @@ function StateManager.updatePlaying(state, dt, game)
 end
 
 function StateManager.updateGameOver(state, dt, game)
-    state.gameOverTimer = state.gameOverTimer - dt
-    if state.gameOverTimer <= 0 then
-        StateManager.reset(state, game)
+    -- Game over screen now waits for input to dismiss (no auto-timer)
+    -- The gameOverTimer is used as a brief delay before allowing dismissal
+    if state.gameOverTimer > 0 then
+        state.gameOverTimer = state.gameOverTimer - dt
     end
+end
+
+function StateManager.canDismissGameOver(state)
+    return state.current == StateManager.STATES.GAME_OVER and state.gameOverTimer <= 0
+end
+
+function StateManager.dismissGameOver(state, game)
+    if StateManager.canDismissGameOver(state) then
+        StateManager.reset(state, game)
+        return true
+    end
+    return false
 end
 
 function StateManager.updateDisconnectedPause(state, dt, game)
@@ -144,6 +169,14 @@ function StateManager.startCountdown(state, game)
     state.current = StateManager.STATES.COUNTDOWN
     state.countdownTimer = 3.0
     Audio:play('beep')
+    
+    -- Always create a fresh board for the new game
+    local TetrisBoard = require('src.tetris.board')
+    game.localBoard = TetrisBoard:new(10, 20)
+    game.sentGameOver = false
+    game.lastSentScore = 0
+    game.lastSentMove = {x=0, y=0, rot=0, type=""}
+    game.sprintTime = 0
     
     -- Initialize mode-specific state
     if game.gameMode == "MARATHON" then
@@ -159,26 +192,40 @@ end
 
 function StateManager.enterGameOver(state, game)
     state.current = StateManager.STATES.GAME_OVER
-    state.gameOverTimer = 5.0
+    state.gameOverTimer = 1.0  -- Brief delay before allowing dismissal
 end
 
-function StateManager.enterDisconnectedPause(state, game)
-    print("StateManager: Entering disconnected pause")
+function StateManager.enterDisconnectedPause(state, game, reason)
+    print("StateManager: Entering disconnected pause (reason: " .. tostring(reason) .. ")")
     state.current = StateManager.STATES.DISCONNECTED_PAUSE
-    state.disconnectPauseTimer = 3.0
+    state.disconnectPauseTimer = 5.0  -- Give players 5 seconds to read the message
+    state.disconnectReason = reason or "opponent_left"
     Audio:pauseMusic()
 end
 
 function StateManager.resumeAsSinglePlayer(state, game)
     print("StateManager: Resuming as single player")
     state.current = StateManager.STATES.PLAYING
+    state.disconnectReason = nil
     
-    if not game.isHost and game.network then
+    -- Clean up network connections
+    if game.network then
         game.network:disconnect()
         game.network = nil
     end
     
+    -- Clean up online client
+    if game.connectionManager and game.connectionManager.onlineClient then
+        if game.connectionManager.onlineClient.disconnect then
+            game.connectionManager.onlineClient:disconnect()
+        end
+        game.connectionManager.onlineClient = nil
+    end
+    
+    -- Clear remote boards and switch to single player mode
     game.remoteBoards = {}
+    game.isHost = true  -- Mark as host so game over/reset works correctly
+    
     Audio:resumeMusic()
 end
 

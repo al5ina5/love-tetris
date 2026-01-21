@@ -91,7 +91,9 @@ function RelayClient:poll()
     if err == "closed" then
         print("RelayClient: Connection closed by relay")
         self.connected = false
-        return {}
+        -- Generate a player_left message so the game handles it properly
+        table.insert(messages, { type = "player_left", id = "opponent", disconnectReason = "connection_closed" })
+        return messages
     end
     
     local combinedData = self.buffer .. (data or partial or "")
@@ -102,6 +104,15 @@ function RelayClient:poll()
         if line == "PAIRED" then
             print("RelayClient: Opponent connected to relay!")
             self.paired = true
+        elseif line == "OPPONENT_LEFT" then
+            print("RelayClient: Opponent left the room!")
+            self.paired = false
+            -- Generate a player_left message so the game handles the disconnection
+            table.insert(messages, { type = "player_left", id = "opponent", disconnectReason = "opponent_left" })
+        elseif line:match("^ERROR:") then
+            local errorMsg = line:sub(7)
+            print("RelayClient: Server error: " .. errorMsg)
+            -- Could generate an error message for the game to handle
         elseif line ~= "" then
             local msg = Protocol.decode(line)
             if msg and msg.id ~= self.playerId then

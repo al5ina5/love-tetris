@@ -4,20 +4,20 @@
 local WaitingScreens = {}
 
 function WaitingScreens.drawWaiting(menu, sw, sh, game)
-    game:drawText("HOSTING GAME", 0, 30, sw, "center", {1, 1, 1})
-    game:drawText("Waiting for opponent...", 0, 80, sw, "center", {0.6, 0.6, 0.6})
+    game:drawText("HOSTING GAME", 0, 60, sw, "center", {1, 1, 1})
+    game:drawText("Waiting for opponent...", 0, 160, sw, "center", {0.6, 0.6, 0.6})
     
     if menu.discovery and menu.discovery.localIP then
-        game:drawText("Your IP: " .. menu.discovery.localIP, 0, 110, sw, "center", {0.4, 0.8, 0.4})
+        game:drawText("Your IP: " .. menu.discovery.localIP, 0, 220, sw, "center", {0.4, 0.8, 0.4})
     end
 end
 
 function WaitingScreens.drawConnecting(menu, sw, sh, game)
-    game:drawText("CONNECTING", 0, 30, sw, "center", {1, 1, 1})
-    game:drawText("Please wait...", 0, 80, sw, "center", {0.6, 0.6, 0.6})
+    game:drawText("CONNECTING", 0, 60, sw, "center", {1, 1, 1})
+    game:drawText("Please wait...", 0, 160, sw, "center", {0.6, 0.6, 0.6})
 
     if menu.selectedServer then
-        game:drawText(menu.selectedServer.name, 0, 110, sw, "center", {0.6, 0.6, 0.6})
+        game:drawText(menu.selectedServer.name, 0, 220, sw, "center", {0.6, 0.6, 0.6})
     end
 end
 

@@ -1,7 +1,13 @@
 -- src/ui/menu/main_menu.lua
 -- Main menu screen
 
+local Updater = require("src.net.updater")
+local Constants = require("src.constants")
+
 local MainMenu = {}
+
+-- Track if we've checked for updates this session
+local updateCheckDone = false
 
 function MainMenu.draw(menu, sw, sh, game)
     local Base = require('src.ui.menu.base')
@@ -15,6 +21,24 @@ function MainMenu.draw(menu, sw, sh, game)
             "OPTIONS",
         }
         Base.drawLinkMenu(menu, sw, sh, game, "SIRTET", nil, options)
+        
+        -- Check for updates in background (once per session)
+        if Updater.isSupported() and not updateCheckDone and not Updater.state.checking then
+            updateCheckDone = true
+            -- Do the check (this is blocking but fast - just a small HTTP request)
+            Updater.checkForUpdate()
+        end
+        
+        -- Show update notification if available
+        if Updater.hasUpdate() then
+            local updateText = "Update available: " .. Updater.getLatestVersion() .. " (current: v" .. Constants.VERSION .. ")"
+            if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
+            game:drawText(updateText, 0, sh - 40, sw, "center", {0.5, 1, 0.5})
+        end
+        
+        -- Show version in corner
+        if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
+        game:drawText("v" .. Constants.VERSION, sw - 80, sh - 30, 70, "right", {0.5, 0.5, 0.5})
     elseif menu.state == Base.STATE.SUBMENU_SINGLEPLAYER then
         -- Single player submenu - link style
         local options = {

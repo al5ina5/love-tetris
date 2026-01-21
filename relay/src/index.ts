@@ -15,10 +15,12 @@ interface Room {
   maxPlayers: number;
   createdAt: number;
   lastHeartbeat: number;
+  gameStarted: boolean;  // Track if game has begun
 }
 
 interface RoomData {
   sockets: net.Socket[];
+  gameStarted: boolean;
 }
 
 // --- In-Memory State ---
@@ -49,6 +51,7 @@ app.post('/api/create-room', (req: Request, res: Response) => {
     maxPlayers: 2,
     createdAt: Date.now(),
     lastHeartbeat: Date.now(),
+    gameStarted: false,
   };
   
   rooms.set(code, room);
@@ -61,6 +64,7 @@ app.get('/api/list-rooms', (_req: Request, res: Response) => {
   const publicRooms = Array.from(rooms.values()).filter(r => 
     r.isPublic && 
     r.players < r.maxPlayers && 
+    !r.gameStarted &&  // Don't show rooms where game already started
     (now - r.lastHeartbeat) < 60000 // Only show active rooms
   );
   res.json({ rooms: publicRooms });
@@ -72,6 +76,7 @@ app.post('/api/join-room', (req: Request, res: Response) => {
   
   if (!room) return res.status(404).json({ error: 'Room not found' });
   if (room.players >= room.maxPlayers) return res.status(400).json({ error: 'Room full' });
+  if (room.gameStarted) return res.status(400).json({ error: 'Game already in progress' });
   
   res.json({ success: true });
 });
@@ -95,6 +100,7 @@ app.listen(HTTP_PORT, () => {
 const tcpServer = net.createServer((socket: net.Socket) => {
   let currentRoomCode: string | null = null;
   let buffer = '';
+  let cleanedUp = false;
 
   socket.on('data', (data: Buffer) => {
     buffer += data.toString();
@@ -106,15 +112,25 @@ const tcpServer = net.createServer((socket: net.Socket) => {
         const code = line.split(':')[1].toUpperCase();
         currentRoomCode = code;
         
+        const room = rooms.get(code);
+        
+        // Reject if game already started
+        if (room && room.gameStarted) {
+          socket.write('ERROR:Game already in progress\n');
+          socket.end();
+          continue;
+        }
+        
         let roomData = roomSockets.get(code);
         if (!roomData) {
-          roomData = { sockets: [socket] };
+          roomData = { sockets: [socket], gameStarted: false };
           roomSockets.set(code, roomData);
+          console.log(`[TCP] Player joined room ${code} (1st player)`);
         } else {
           if (roomData.sockets.length < 2) {
             roomData.sockets.push(socket);
-            const room = rooms.get(code);
             if (room) room.players = roomData.sockets.length;
+            console.log(`[TCP] Player joined room ${code} (2nd player)`);
             
             // Notify both players they are paired
             roomData.sockets.forEach(s => s.write('PAIRED\n'));
@@ -124,6 +140,15 @@ const tcpServer = net.createServer((socket: net.Socket) => {
           }
         }
         continue;
+      }
+
+      // Track game start (countdown message)
+      if (line.includes('|scd|') || line.startsWith('scd|')) {
+        const roomData = roomSockets.get(currentRoomCode || '');
+        const room = rooms.get(currentRoomCode || '');
+        if (roomData) roomData.gameStarted = true;
+        if (room) room.gameStarted = true;
+        console.log(`[TCP] Game started in room ${currentRoomCode}`);
       }
 
       // Forward data to others in the same room
@@ -139,6 +164,9 @@ const tcpServer = net.createServer((socket: net.Socket) => {
   });
 
   const cleanup = () => {
+    if (cleanedUp) return;  // Prevent double cleanup
+    cleanedUp = true;
+    
     if (currentRoomCode) {
       const roomData = roomSockets.get(currentRoomCode);
       if (roomData) {
@@ -147,17 +175,30 @@ const tcpServer = net.createServer((socket: net.Socket) => {
         if (room) room.players = roomData.sockets.length;
 
         if (roomData.sockets.length === 0) {
+          // No players left - delete the room entirely
           roomSockets.delete(currentRoomCode);
           rooms.delete(currentRoomCode);
+          console.log(`[TCP] Room ${currentRoomCode} deleted (empty)`);
         } else {
+          // Notify remaining player(s) that opponent left
           roomData.sockets.forEach(s => s.write('OPPONENT_LEFT\n'));
+          console.log(`[TCP] Player left room ${currentRoomCode}, notified remaining players`);
+          
+          // If game was in progress, reset game state so host can rematch or continue solo
+          if (roomData.gameStarted) {
+            roomData.gameStarted = false;
+            if (room) room.gameStarted = false;
+          }
         }
       }
     }
   };
 
   socket.on('close', cleanup);
-  socket.on('error', cleanup);
+  socket.on('error', (err) => {
+    console.log(`[TCP] Socket error: ${err.message}`);
+    cleanup();
+  });
 });
 
 tcpServer.listen(TCP_PORT, () => {

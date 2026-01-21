@@ -11,58 +11,58 @@ function Stats.draw(menu, sw, sh, game)
 
     -- Title - match OPTIONS style
     love.graphics.setFont(game.fonts.medium)
-    game:drawText("STATISTICS", 0, 30, sw, "center", {1, 1, 1})
+    game:drawText("STATISTICS", 0, 60, sw, "center", {1, 1, 1})
 
     -- Summary Stats
-    local y = 55
+    local y = 110
     local statsColor = {0.8, 1, 0.8}
     local labelColor = {0.7, 0.7, 0.7}
     
     -- High Score
-    game:drawText("HIGH SCORE", 10, y, sw/2 - 20, "left", labelColor)
-    game:drawText(tostring(stats.highScore), 10, y + 10, sw/2 - 20, "left", statsColor)
+    game:drawText("HIGH SCORE", 20, y, sw/2 - 40, "left", labelColor)
+    game:drawText(tostring(stats.highScore), 20, y + 20, sw/2 - 40, "left", statsColor)
     
     -- Best Sprint
     local sprintText = stats.bestSprint > 0 and string.format("%.2fs", stats.bestSprint) or "N/A"
-    game:drawText("BEST SPRINT", sw/2 + 10, y, sw/2 - 20, "left", labelColor)
-    game:drawText(sprintText, sw/2 + 10, y + 10, sw/2 - 20, "left", statsColor)
+    game:drawText("BEST SPRINT", sw/2 + 20, y, sw/2 - 40, "left", labelColor)
+    game:drawText(sprintText, sw/2 + 20, y + 20, sw/2 - 40, "left", statsColor)
     
-    y = y + 25
+    y = y + 50
     
     -- Marathon High Level
-    game:drawText("MARATHON LVL", 10, y, sw/2 - 20, "left", labelColor)
+    game:drawText("MARATHON LVL", 20, y, sw/2 - 40, "left", labelColor)
     local marathonLvlText = stats.marathonHighLevel > 0 and tostring(stats.marathonHighLevel) or "N/A"
-    game:drawText(marathonLvlText, 10, y + 10, sw/2 - 20, "left", statsColor)
+    game:drawText(marathonLvlText, 20, y + 20, sw/2 - 40, "left", statsColor)
     
     -- Marathon High Score
-    game:drawText("MARATHON HI", sw/2 + 10, y, sw/2 - 20, "left", labelColor)
+    game:drawText("MARATHON HI", sw/2 + 20, y, sw/2 - 40, "left", labelColor)
     local marathonScoreText = stats.marathonHighScore > 0 and tostring(stats.marathonHighScore) or "N/A"
-    game:drawText(marathonScoreText, sw/2 + 10, y + 10, sw/2 - 20, "left", statsColor)
+    game:drawText(marathonScoreText, sw/2 + 20, y + 20, sw/2 - 40, "left", statsColor)
     
-    y = y + 25
+    y = y + 50
     
     -- Versus Stats
-    game:drawText("VERSUS W/L", 10, y, sw/2 - 20, "left", labelColor)
-    game:drawText(string.format("%d - %d", stats.versusWins, stats.versusLosses), 10, y + 10, sw/2 - 20, "left", statsColor)
+    game:drawText("VERSUS W/L", 20, y, sw/2 - 40, "left", labelColor)
+    game:drawText(string.format("%d - %d", stats.versusWins, stats.versusLosses), 20, y + 20, sw/2 - 40, "left", statsColor)
     
     -- Total Games
-    game:drawText("TOTAL GAMES", sw/2 + 10, y, sw/2 - 20, "left", labelColor)
-    game:drawText(tostring(stats.totalGames), sw/2 + 10, y + 10, sw/2 - 20, "left", statsColor)
+    game:drawText("TOTAL GAMES", sw/2 + 20, y, sw/2 - 40, "left", labelColor)
+    game:drawText(tostring(stats.totalGames), sw/2 + 20, y + 20, sw/2 - 40, "left", statsColor)
 
-    y = y + 35
+    y = y + 70
     
     -- Match History Header
     love.graphics.setColor(0.3, 0.3, 0.3)
-    love.graphics.line(10, y - 5, sw - 10, y - 5)
+    love.graphics.line(20, y - 10, sw - 20, y - 10)
     game:drawText("MATCH HISTORY", 0, y, sw, "center", {1, 1, 1})
-    y = y + 15
+    y = y + 30
 
     -- Scrollable history
     local visibleCount = 6
     local historyIndex = menu.historyScrollIndex or 1
     
     if #history == 0 then
-        game:drawText("NO MATCHES RECORDED", 0, y + 20, sw, "center", {0.5, 0.5, 0.5})
+        game:drawText("NO MATCHES RECORDED", 0, y + 40, sw, "center", {0.5, 0.5, 0.5})
     else
         for i = historyIndex, math.min(#history, historyIndex + visibleCount - 1) do
             local match = history[i]
@@ -85,23 +85,23 @@ function Stats.draw(menu, sw, sh, game)
                 detailText = string.format("SCORE: %d", match.score)
             end
             
-            local itemY = y + (i - historyIndex) * 18
-            game:drawText(string.format("%s %s", modeText, resultText), 15, itemY, sw - 30, "left", color)
-            game:drawText(detailText, 15, itemY, sw - 30, "right", {0.6, 0.6, 0.6})
-            game:drawText(match.timestamp, 15, itemY, sw - 30, "center", {0.4, 0.4, 0.4})
+            local itemY = y + (i - historyIndex) * 36
+            game:drawText(string.format("%s %s", modeText, resultText), 30, itemY, sw - 60, "left", color)
+            game:drawText(detailText, 30, itemY, sw - 60, "right", {0.6, 0.6, 0.6})
+            game:drawText(match.timestamp, 30, itemY, sw - 60, "center", {0.4, 0.4, 0.4})
         end
         
         -- Scroll indicators
         if historyIndex > 1 then
-            game:drawText("^", sw - 15, y - 5, 10, "center", {1, 1, 0})
+            game:drawText("^", sw - 30, y - 10, 20, "center", {1, 1, 0})
         end
         if historyIndex + visibleCount <= #history then
-            game:drawText("v", sw - 15, y + (visibleCount * 18) - 15, 10, "center", {1, 1, 0})
+            game:drawText("v", sw - 30, y + (visibleCount * 36) - 30, 20, "center", {1, 1, 0})
         end
     end
 
     -- Back hint
-    game:drawText("BACK (B/ESC)", 0, sh - 15, sw, "center", {0.5, 0.5, 0.5})
+    game:drawText("BACK (B/ESC)", 0, sh - 30, sw, "center", {0.5, 0.5, 0.5})
 end
 
 function Stats.handleKey(menu, key)

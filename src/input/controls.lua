@@ -22,9 +22,9 @@ Controls.defaults = {
         move_right = "right",
         move_down = "down",
         hard_drop = "up",
-        rotate_cw = "x",
-        rotate_ccw = "z",
-        hold = "a",
+        rotate_cw = "space",
+        rotate_ccw = "x",
+        hold = "lshift",
         pause = "escape"
     },
     gamepad = {

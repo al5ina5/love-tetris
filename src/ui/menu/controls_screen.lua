@@ -75,11 +75,11 @@ function ControlsUI.draw(menu, sw, sh, game)
     end
     
     -- Title - match OPTIONS style
-    game:drawText("CONTROLS", 0, 30, sw, "center", {1, 1, 1})
+    game:drawText("CONTROLS", 0, 60, sw, "center", {1, 1, 1})
     
-    -- Draw items - match OPTIONS style (startY=60, spacing=18)
-    local startY = 60
-    local spacing = 18
+    -- Draw items - match OPTIONS style (startY=120, spacing=36)
+    local startY = 120
+    local spacing = 36
     local visibleCount = 9  -- Adjusted for spacing
     
     -- Smooth scrolling: keep selected item visible with minimal movement
@@ -99,23 +99,23 @@ function ControlsUI.draw(menu, sw, sh, game)
         if item.type == "device_selector" then
             -- Device selector - match OPTIONS style
             local text = prefix .. item.name
-            game:drawText(text, 20, y, sw - 40, "left", color)
-            game:drawText(item.getDisplay(), 20, y, sw - 60, "right", color)
+            game:drawText(text, 40, y, sw - 80, "left", color)
+            game:drawText(item.getDisplay(), 40, y, sw - 120, "right", color)
         elseif item.type == "keybind" then
             -- Match OPTIONS style: simple left-aligned name, right-aligned value
             local text = prefix .. item.name
-            game:drawText(text, 20, y, sw - 40, "left", color)
+            game:drawText(text, 40, y, sw - 80, "left", color)
             
             local valueText = item.getValue()
             if menu.controlsWaitingForInput and isSelected then
                 valueText = "PRESS KEY..."
                 color = {1, 0.5, 0.5}
             end
-            game:drawText(valueText, 20, y, sw - 60, "right", color)
+            game:drawText(valueText, 40, y, sw - 120, "right", color)
         elseif item.type == "action" or item.type == "back" then
-            game:drawText(prefix .. item.name, 20, y, sw - 40, "left", color)
+            game:drawText(prefix .. item.name, 40, y, sw - 80, "left", color)
         elseif item.type == "separator" then
-            y = y - 8 -- Just add space, no visual
+            y = y - 16 -- Just add space, no visual
         end
         
         y = y + spacing
@@ -123,19 +123,19 @@ function ControlsUI.draw(menu, sw, sh, game)
     
     -- Scroll indicators - match OPTIONS clean style
     if menu.controlsScrollOffset > 0 then
-        game:drawText("^", sw - 20, startY - 15, 10, "center", {1, 1, 0.5})
+        game:drawText("^", sw - 40, startY - 30, 20, "center", {1, 1, 0.5})
     end
     if menu.controlsScrollOffset + visibleCount < #menu.controlsItems then
-        game:drawText("v", sw - 20, startY + visibleCount * spacing - 5, 10, "center", {1, 1, 0.5})
+        game:drawText("v", sw - 40, startY + visibleCount * spacing - 10, 20, "center", {1, 1, 0.5})
     end
 end
 
 function ControlsUI.drawDialog(menu, sw, sh, game)
     -- First draw the controls menu in the background
-    game:drawText("CONTROLS", 0, 30, sw, "center", {1, 1, 1})
+    game:drawText("CONTROLS", 0, 60, sw, "center", {1, 1, 1})
     
-    local startY = 60
-    local spacing = 18
+    local startY = 120
+    local spacing = 36
     local visibleCount = 9
     
     local y = startY
@@ -147,16 +147,16 @@ function ControlsUI.drawDialog(menu, sw, sh, game)
         
         if item.type == "device_selector" then
             local text = prefix .. item.name
-            game:drawText(text, 20, y, sw - 40, "left", color)
-            game:drawText(item.getDisplay(), 20, y, sw - 60, "right", color)
+            game:drawText(text, 40, y, sw - 80, "left", color)
+            game:drawText(item.getDisplay(), 40, y, sw - 120, "right", color)
         elseif item.type == "keybind" then
             local text = prefix .. item.name
-            game:drawText(text, 20, y, sw - 40, "left", color)
-            game:drawText(item.getValue(), 20, y, sw - 60, "right", color)
+            game:drawText(text, 40, y, sw - 80, "left", color)
+            game:drawText(item.getValue(), 40, y, sw - 120, "right", color)
         elseif item.type == "action" or item.type == "back" then
-            game:drawText(prefix .. item.name, 20, y, sw - 40, "left", color)
+            game:drawText(prefix .. item.name, 40, y, sw - 80, "left", color)
         elseif item.type == "separator" then
-            y = y - 8
+            y = y - 16
         end
         
         y = y + spacing
@@ -251,7 +251,7 @@ function ControlsUI.handleKey(menu, key, onSettingChanged)
 end
 
 function ControlsUI.handleDialogKey(menu, key, onControlsChanged)
-    if key == "left" or key == "right" then
+    if key == "up" or key == "down" or key == "left" or key == "right" then
         menu.controlsDialogOption = (menu.controlsDialogOption == 1) and 2 or 1
         return true
     elseif key == "return" or key == "space" or key == "x" then
@@ -355,7 +355,7 @@ function ControlsUI.handleGamepad(menu, button, onSettingChanged)
 end
 
 function ControlsUI.handleDialogGamepad(menu, button, onControlsChanged)
-    if button == "dpleft" or button == "dpright" then
+    if button == "dpup" or button == "dpdown" or button == "dpleft" or button == "dpright" then
         menu.controlsDialogOption = (menu.controlsDialogOption == 1) and 2 or 1
         return true
     elseif button == "a" then

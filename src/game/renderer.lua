@@ -11,17 +11,17 @@ function Renderer.init()
     
     -- Create fonts optimized for sharp scaling
     local fonts = {
-        small = love.graphics.newFont('assets/fonts/upheavtt.ttf', 12),
-        medium = love.graphics.newFont('assets/fonts/upheavtt.ttf', 18),
-        large = love.graphics.newFont('assets/fonts/upheavtt.ttf', 40),
-        score = love.graphics.newFont('assets/fonts/upheavtt.ttf', 30)
+        small = love.graphics.newFont('assets/fonts/upheavtt.ttf', 24),
+        medium = love.graphics.newFont('assets/fonts/upheavtt.ttf', 36),
+        large = love.graphics.newFont('assets/fonts/upheavtt.ttf', 80),
+        score = love.graphics.newFont('assets/fonts/upheavtt.ttf', 60)
     }
     
     for _, f in pairs(fonts) do
         f:setFilter("nearest", "nearest")
     end
     
-    local canvas = love.graphics.newCanvas(320, 240)
+    local canvas = love.graphics.newCanvas(640, 480)
     canvas:setFilter("nearest", "nearest")
     
     return {
@@ -29,8 +29,8 @@ function Renderer.init()
         canvas = canvas,
         activeShader = nil,
         hasTimeUniform = false,
-        screenWidth = 320,
-        screenHeight = 240
+        screenWidth = 640,
+        screenHeight = 480
     }
 end
 
@@ -48,7 +48,7 @@ function Renderer.loadShader(shaderType)
     
     local shader = love.graphics.newShader(shaderCode)
     if shader:hasUniform("inputRes") then
-        shader:send("inputRes", {320, 240})
+        shader:send("inputRes", {640, 480})
     end
     local hasTime = shader:hasUniform("time")
     
@@ -142,10 +142,15 @@ end
 function Renderer.drawGameplay(state, game, sw, sh)
     local hasOpponents = game:countRemotePlayers() > 0
     local isNetworked = game.network ~= nil
-    local bsW, bsH = 16, 11
+    local isDisconnectedPause = game.state == "disconnected_pause"
+    local bsW, bsH = 32, 22
     local bw, bh = 10 * bsW, 20 * bsH
     
-    if not hasOpponents and not isNetworked then
+    -- Calculate preview positions to prevent overflow (canvas height is 480)
+    local previewY = sh - 40
+    
+    -- During disconnected pause, render as single player (no ghost board)
+    if not hasOpponents and (not isNetworked or isDisconnectedPause) then
         -- Single player layout
         local bx = (sw - bw) / 2
         local by = 0
@@ -153,26 +158,26 @@ function Renderer.drawGameplay(state, game, sw, sh)
         
         -- Hold piece
         if game.localBoard.holdPieceType then
-            game.localBoard:drawPiecePreview(game.localBoard.holdPieceType, bx - 40, 20, 8, 8)
+            game.localBoard:drawPiecePreview(game.localBoard.holdPieceType, bx - 80, 40, 16, 16)
         end
         
         -- Next queue (3 pieces)
         for i, pieceType in ipairs({game.localBoard.nextPieceType, game.localBoard.nextQueue[1], game.localBoard.nextQueue[2]}) do
-            game.localBoard:drawPiecePreview(pieceType, bx + bw + 10, 20 + (i-1)*35, 8, 8)
+            game.localBoard:drawPiecePreview(pieceType, bx + bw + 20, 40 + (i-1)*70, 16, 16)
         end
     else
         -- Multiplayer layout
         local lx, ly = 0, 0
         game.localBoard:draw(lx, ly, bsW, bsH, game, nil, game.menu.settings.ghost)
         
-        -- Hold piece (small)
+        -- Hold piece (small) - position at bottom within canvas bounds
         if game.localBoard.holdPieceType then
-            game.localBoard:drawPiecePreview(game.localBoard.holdPieceType, lx + 10, bh + 2, 4, 4)
+            game.localBoard:drawPiecePreview(game.localBoard.holdPieceType, lx + 20, previewY, 8, 8)
         end
         
-        -- Next pieces (small)
+        -- Next pieces (small) - position at bottom within canvas bounds
         for i, pieceType in ipairs({game.localBoard.nextPieceType, game.localBoard.nextQueue[1], game.localBoard.nextQueue[2]}) do
-            game.localBoard:drawPiecePreview(pieceType, lx + bw - 26, bh + 2 + (i-1)*15, 4, 4)
+            game.localBoard:drawPiecePreview(pieceType, lx + bw - 52, previewY - (3-i)*30, 8, 8)
         end
         
         -- Opponent boards
@@ -182,12 +187,13 @@ function Renderer.drawGameplay(state, game, sw, sh)
             if count == 0 then
                 local rx, ry = sw / 2, 0
                 board:draw(rx, ry, bsW, bsH, game, opponentColor)
-                board:drawPiecePreview(board.nextPieceType, rx + bw - 26, bh + 2, 4, 4)
+                -- Position opponent piece preview at bottom within canvas bounds
+                board:drawPiecePreview(board.nextPieceType, rx + bw - 52, previewY, 8, 8)
             else
-                local miniBs = 4
+                local miniBs = 8
                 local miniBw, miniBh = 10 * miniBs, 20 * miniBs
-                local ex = sw - miniBw - 5
-                local ey = 5 + (count - 1) * (miniBh + 10)
+                local ex = sw - miniBw - 10
+                local ey = 10 + (count - 1) * (miniBh + 20)
                 board:draw(ex, ey, miniBs, miniBs, game, opponentColor)
             end
             count = count + 1
@@ -217,19 +223,27 @@ end
 function Renderer.drawGameUI(state, game, sw, sh)
     local hasOpponents = game:countRemotePlayers() > 0
     local isNetworked = game.network ~= nil
-    local bsW, bsH = 16, 11
+    local bsW, bsH = 32, 22
     local bw, bh = 10 * bsW, 20 * bsH
+    
+    -- Calculate UI positions once to prevent overflow (canvas height is 480)
+    local scoreY = sh - 70
+    local previewY = sh - 40
     
     if not hasOpponents and not isNetworked then
         -- Single player UI
         local bx = (sw - bw) / 2
-        love.graphics.setFont(state.fonts.score)
-        Renderer.drawText(tostring(game.localBoard.score), bx, bh + 2, bw, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
+        
+        -- Don't draw score here during game over (it's shown in the game over overlay)
+        if game.state ~= "over" then
+            love.graphics.setFont(state.fonts.score)
+            Renderer.drawText(tostring(game.localBoard.score), bx, scoreY, bw, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
+        end
         
         if game.gameMode == "SPRINT" then
             love.graphics.setFont(state.fonts.medium)
-            Renderer.drawText("LINES: " .. game.localBoard.linesCleared .. "/40", bx, 5, bw, "center", {1, 1, 1})
-            Renderer.drawText(string.format("TIME: %.2f", game.sprintTime), bx, 20, bw, "center", {1, 1, 1})
+            Renderer.drawText("LINES: " .. game.localBoard.linesCleared .. "/40", bx, 10, bw, "center", {1, 1, 1})
+            Renderer.drawText(string.format("TIME: %.2f", game.sprintTime), bx, 45, bw, "center", {1, 1, 1})
         elseif game.gameMode == "MARATHON" and game.marathonState then
             love.graphics.setFont(state.fonts.medium)
             local MarathonRenderer = require('src.game.marathon_renderer')
@@ -241,27 +255,23 @@ function Renderer.drawGameUI(state, game, sw, sh)
 
         if game.localBoard.combo > 0 then
             love.graphics.setFont(state.fonts.medium)
-            Renderer.drawText("COMBO x" .. game.localBoard.combo, bx - 60, bh - 20, 60, "right", {1, 0.5, 0.5})
+            Renderer.drawText("COMBO x" .. game.localBoard.combo, bx - 120, bh - 40, 120, "right", {1, 0.5, 0.5})
         end
         
-        if game.state == "waiting" then
-            love.graphics.setFont(state.fonts.small)
-            Renderer.drawText("WAITING FOR OPPONENT...", bx, bh - 20, bw, "center", {0.7, 0.7, 0.7})
-        end
     else
         -- Multiplayer UI
         love.graphics.setFont(state.fonts.score)
-        Renderer.drawText(tostring(game.localBoard.score), 0, bh - 15, sw / 2, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
+        Renderer.drawText(tostring(game.localBoard.score), 0, scoreY, sw / 2, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
         
         if game.localBoard.pendingGarbage > 0 then
             love.graphics.setFont(state.fonts.small)
-            Renderer.drawText("GARBAGE: " .. game.localBoard.pendingGarbage, 0, bh - 25, sw / 2, "center", {1, 0, 0})
+            Renderer.drawText("GARBAGE: " .. game.localBoard.pendingGarbage, 0, bh - 50, sw / 2, "center", {1, 0, 0})
         end
         
         local count = 0
         for id, board in pairs(game.remoteBoards) do
             if count == 0 then
-                Renderer.drawText(tostring(board.score or 0), sw / 2, bh - 15, sw / 2, "center", {0.8, 0.8, 0.8})
+                Renderer.drawText(tostring(board.score or 0), sw / 2, scoreY, sw / 2, "center", {0.8, 0.8, 0.8})
             end
             count = count + 1
         end
@@ -272,35 +282,24 @@ function Renderer.drawGameUI(state, game, sw, sh)
         love.graphics.setFont(state.fonts.large)
         local text = math.ceil(game.stateManager.countdownTimer)
         if text == 0 then text = "GO!" end
-        Renderer.drawText(tostring(text), 0, sh/2 - 20, sw, "center", {1, 0.3, 0.1}, {0.3, 0, 0})
+        Renderer.drawText(tostring(text), 0, sh/2 - 40, sw, "center", {1, 0.3, 0.1}, {0.3, 0, 0})
     end
 
     -- Game Over
     if game.state == "over" then
         love.graphics.setFont(state.fonts.large)
-        local text = "GAME OVER"
         local color = {1, 0.2, 0.2}
         local shadow = {0.3, 0, 0}
         
         if game.gameMode == "SPRINT" and game.localBoard.linesCleared >= 40 then
-            text = "SPRINT FINISHED!"
-            color = {0.2, 1, 0.2}
-            shadow = {0, 0.3, 0}
-        elseif game.gameMode == "MARATHON" then
-            text = "MARATHON COMPLETE"
-            color = {0.2, 1, 0.2}
-            shadow = {0, 0.3, 0}
-        elseif game:countRemotePlayers() > 0 and not game.localBoard.gameOver then
-            text = "YOU WON!"
-            color = {0.2, 1, 0.2}
-            shadow = {0, 0.3, 0}
-        end
-        Renderer.drawText(text, 0, sh/2 - 20, sw, "center", color, shadow)
-        
-        if game.gameMode == "SPRINT" then
+            Renderer.drawText("SPRINT", 0, sh/2 - 100, sw, "center", {0.2, 1, 0.2}, {0, 0.3, 0})
+            Renderer.drawText("FINISHED!", 0, sh/2 - 30, sw, "center", {0.2, 1, 0.2}, {0, 0.3, 0})
             love.graphics.setFont(state.fonts.medium)
-            Renderer.drawText(string.format("FINAL TIME: %.2f", game.sprintTime), 0, sh/2 + 25, sw, "center", {1, 1, 1})
+            Renderer.drawText(string.format("FINAL TIME: %.2f", game.sprintTime), 0, sh/2 + 60, sw, "center", {1, 1, 1})
         elseif game.gameMode == "MARATHON" and game.marathonState then
+            Renderer.drawText("MARATHON", 0, sh/2 - 140, sw, "center", {0.2, 1, 0.2}, {0, 0.3, 0})
+            Renderer.drawText("COMPLETE", 0, sh/2 - 70, sw, "center", {0.2, 1, 0.2}, {0, 0.3, 0})
+            
             love.graphics.setFont(state.fonts.medium)
             local MarathonState = require('src.game.marathon_state')
             local summary = MarathonState.getSummary(game.marathonState, game.localBoard)
@@ -308,17 +307,56 @@ function Renderer.drawGameUI(state, game, sw, sh)
                 math.floor(summary.time / 60),
                 math.floor(summary.time % 60),
                 math.floor((summary.time % 1) * 100))
-            Renderer.drawText("LEVEL " .. summary.level .. " | " .. summary.lines .. " LINES", 0, sh/2 + 10, sw, "center", {1, 1, 1})
-            Renderer.drawText("TIME: " .. timeStr, 0, sh/2 + 30, sw, "center", {1, 1, 1})
+            
+            local statsY = sh/2 + 20
+            Renderer.drawText("LEVEL " .. summary.level, 0, statsY, sw, "center", {1, 1, 1})
+            Renderer.drawText("LINES " .. summary.lines, 0, statsY + 40, sw, "center", {1, 1, 1})
+            Renderer.drawText("TIME " .. timeStr, 0, statsY + 80, sw, "center", {1, 1, 1})
+            
+            love.graphics.setFont(state.fonts.score)
+            Renderer.drawText(tostring(game.localBoard.score), 0, statsY + 130, sw, "center", {1, 0.9, 0.3}, {0.4, 0.2, 0})
+        elseif game:countRemotePlayers() > 0 and not game.localBoard.gameOver then
+            Renderer.drawText("YOU WON!", 0, sh/2 - 40, sw, "center", {0.2, 1, 0.2}, {0, 0.3, 0})
+        else
+            Renderer.drawText("GAME OVER", 0, sh/2 - 40, sw, "center", color, shadow)
+        end
+        
+        -- Show "press any key" hint after delay
+        local StateManager = require('src.game.state_manager')
+        if StateManager.canDismissGameOver(game.stateManager) then
+            love.graphics.setFont(state.fonts.small)
+            local alpha = 0.5 + 0.3 * math.sin(love.timer.getTime() * 3)
+            Renderer.drawText("PRESS ANY KEY", 0, sh - 40, sw, "center", {1, 1, 1, alpha})
         end
     end
 
     -- Disconnected Pause
     if game.state == "disconnected_pause" then
         love.graphics.setFont(state.fonts.large)
-        Renderer.drawText("DISCONNECTED", 0, sh/2 - 20, sw, "center", {1, 0.5, 0}, {0.3, 0.1, 0})
+        
+        -- Choose message based on disconnect reason
+        local reason = game.stateManager.disconnectReason or "opponent_left"
+        local mainText = "OPPONENT LEFT"
+        local subText = "Rage quit? Crashed? Who knows :P"
+        
+        if reason == "connection_closed" then
+            mainText = "CONNECTION LOST"
+            subText = "Network hiccup... it happens"
+        end
+        
+        Renderer.drawText(mainText, 0, sh/2 - 80, sw, "center", {1, 0.5, 0}, {0.3, 0.1, 0})
+        
+        love.graphics.setFont(state.fonts.small)
+        Renderer.drawText(subText, 0, sh/2 - 10, sw, "center", {0.7, 0.7, 0.7})
+        
         love.graphics.setFont(state.fonts.medium)
-        Renderer.drawText("RESUMING IN SINGLE PLAYER...", 0, sh/2 + 25, sw, "center", {0.8, 0.8, 0.8})
+        local timeLeft = math.ceil(game.stateManager.disconnectPauseTimer)
+        Renderer.drawText("Continuing solo in " .. timeLeft .. "...", 0, sh/2 + 60, sw, "center", {0.8, 0.8, 0.8})
+        
+        -- Hint to skip
+        love.graphics.setFont(state.fonts.small)
+        local alpha = 0.5 + 0.3 * math.sin(love.timer.getTime() * 3)
+        Renderer.drawText("Press any key to continue now", 0, sh/2 + 110, sw, "center", {1, 1, 1, alpha})
     end
 end
 

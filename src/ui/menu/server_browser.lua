@@ -4,32 +4,32 @@
 local ServerBrowser = {}
 
 function ServerBrowser.draw(menu, sw, sh, game)
-    game:drawText("FIND GAME", 0, 30, sw, "center", {1, 1, 1})
+    game:drawText("FIND GAME", 0, 60, sw, "center", {1, 1, 1})
     
     local servers = menu.discovery:getServers()
     
     if #servers == 0 then
-        game:drawText("Searching for games...", 0, 80, sw, "center", {0.6, 0.6, 0.6})
-        game:drawText("Same WiFi required", 0, 100, sw, "center", {0.6, 0.6, 0.6})
+        game:drawText("Searching for games...", 0, 160, sw, "center", {0.6, 0.6, 0.6})
+        game:drawText("Same WiFi required", 0, 200, sw, "center", {0.6, 0.6, 0.6})
     else
-        local y = 60
-        local spacing = 22
+        local y = 120
+        local spacing = 44
         for i, server in ipairs(servers) do
             local isSelected = (i == menu.selectedIndex)
             local color = isSelected and {1, 1, 0.5} or {0.8, 0.8, 0.8}
             local prefix = isSelected and "> " or "  "
             
             -- Server name and player count
-            game:drawText(prefix .. server.name, 20, y, sw - 40, "left", color)
-            game:drawText(server.players .. "/" .. server.maxPlayers, 20, y, sw - 60, "right", color)
+            game:drawText(prefix .. server.name, 40, y, sw - 80, "left", color)
+            game:drawText(server.players .. "/" .. server.maxPlayers, 40, y, sw - 120, "right", color)
             
             -- IP below (smaller, dimmer)
             love.graphics.setFont(game.renderer.fonts.small)
-            game:drawText(server.ip, 35, y + 10, sw - 40, "left", {0.5, 0.5, 0.5})
+            game:drawText(server.ip, 70, y + 20, sw - 80, "left", {0.5, 0.5, 0.5})
             love.graphics.setFont(game.renderer.fonts.medium)
             
             y = y + spacing
-            if y > sh - 40 then break end
+            if y > sh - 80 then break end
         end
     end
 end

@@ -143,19 +143,19 @@ end
 -- Draw the picker
 function DigitPicker:draw(game, sw, sh)
     -- Draw label
-    game:drawText(self.label, 0, 30, sw, "center", {1, 1, 1})
+    game:drawText(self.label, 0, 60, sw, "center", {1, 1, 1})
     
-    local digitWidth = 14
-    local spacing = 2
+    local digitWidth = 28
+    local spacing = 4
     
     -- Calculate total width including separators
     local totalWidth = (digitWidth * self.length) + (spacing * (self.length - 1))
     for _, sep in pairs(self.separators) do
-        totalWidth = totalWidth + 10
+        totalWidth = totalWidth + 20
     end
     
     local startX = (sw - totalWidth) / 2
-    local y = sh / 2 - 10
+    local y = sh / 2 - 20
     
     local xOffset = 0
     for i = 1, self.length do
@@ -165,11 +165,11 @@ function DigitPicker:draw(game, sw, sh)
         -- Highlight selected digit
         if isSelected then
             love.graphics.setColor(0.3, 0.3, 0.5)
-            love.graphics.rectangle("fill", x - 2, y - 5, digitWidth + 4, 30)
+            love.graphics.rectangle("fill", x - 4, y - 10, digitWidth + 8, 60)
             
             -- Up/down arrows
-            game:drawText("^", x, y - 20, digitWidth, "center", {1, 1, 0.5})
-            game:drawText("v", x, y + 25, digitWidth, "center", {1, 1, 0.5})
+            game:drawText("^", x, y - 40, digitWidth, "center", {1, 1, 0.5})
+            game:drawText("v", x, y + 50, digitWidth, "center", {1, 1, 0.5})
         end
         
         -- Draw digit/character
@@ -182,8 +182,8 @@ function DigitPicker:draw(game, sw, sh)
         -- Draw separator if configured
         if self.separators[i] then
             local sepX = x + digitWidth + spacing
-            game:drawText(self.separators[i], sepX, y, 10, "center", {0.5, 0.5, 0.5})
-            xOffset = xOffset + 10
+            game:drawText(self.separators[i], sepX, y, 20, "center", {0.5, 0.5, 0.5})
+            xOffset = xOffset + 20
         end
     end
 end

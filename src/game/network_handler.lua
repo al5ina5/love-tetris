@@ -164,17 +164,22 @@ function NetworkHandler.handleGarbage(msg, game)
 end
 
 function NetworkHandler.handlePlayerLeft(msg, game)
-    print("Network: Player left: " .. msg.id)
-    game.remoteBoards[msg.id] = nil
+    print("Network: Player left: " .. tostring(msg.id) .. " (reason: " .. tostring(msg.disconnectReason) .. ")")
     
-    if game:countRemotePlayers() == 0 then
-        if game.state == "playing" then
-            print("Network: Last opponent left during game, pausing")
-            local StateManager = require('src.game.state_manager')
-            StateManager.enterDisconnectedPause(game.stateManager, game)
-        else
-            game.stateManager.current = "waiting"
-        end
+    -- Clear all remote boards since we're in a 1v1 game
+    -- This prevents ghost boards from lingering
+    game.remoteBoards = {}
+    
+    if game.state == "playing" or game.state == "countdown" then
+        print("Network: Opponent left during game, entering disconnected pause")
+        local StateManager = require('src.game.state_manager')
+        StateManager.enterDisconnectedPause(game.stateManager, game, msg.disconnectReason)
+    elseif game.state == "waiting" then
+        -- Opponent left before game started, stay in waiting state
+        print("Network: Opponent left during waiting, staying in waiting state")
+    else
+        -- In game over or other state, just clean up
+        print("Network: Opponent left in state: " .. tostring(game.state))
     end
 end
 

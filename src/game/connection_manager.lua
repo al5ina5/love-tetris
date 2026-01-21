@@ -100,9 +100,14 @@ end
 
 function ConnectionManager.returnToMainMenu(game)
     print("Connection: Returning to main menu")
+    
+    -- Clean up LAN hosting
     if game.isHost then
         ConnectionManager.stopHosting(game)
-    elseif game.network then
+    end
+    
+    -- Clean up network connection
+    if game.network then
         if game.network.disconnect then
             game.network:disconnect()
         end
@@ -117,10 +122,23 @@ function ConnectionManager.returnToMainMenu(game)
         game.connectionManager.onlineClient = nil
     end
     
+    -- Reset all game state
     game.remoteBoards = {}
     game.playerId = nil
     game.isHost = false
+    game.sentGameOver = false
+    game.lastSentScore = 0
+    game.lastSentMove = {x=0, y=0, rot=0, type=""}
+    
+    -- Reset state manager
     game.stateManager.current = "waiting"
+    game.stateManager.disconnectReason = nil
+    game.stateManager.disconnectPauseTimer = 0
+    
+    -- Reset connection manager timers
+    game.connectionManager.connectionTimer = 0
+    game.connectionManager.heartbeatTimer = 0
+    
     Audio:playMusic('menu')
 end
 

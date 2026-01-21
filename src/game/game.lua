@@ -185,6 +185,7 @@ function Game:update(dt)
 
     if self.menu:isVisible() then
         self.menu:update(dt)
+        Input:postUpdate()  -- Clear input state even when menu visible
         return
     end
 
@@ -275,6 +276,7 @@ end
 
 function Game:startAlone()
     print("Game: Starting alone")
+    self.isHost = true  -- Mark as host so reset() works correctly after game over
     self.menu:hide()
     StateManager.startCountdown(self.stateManager, self)
 end
