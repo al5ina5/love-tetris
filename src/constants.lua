@@ -96,7 +96,7 @@ Constants.RELAY_HOST = "turntable.proxy.rlwy.net"
 Constants.RELAY_PORT = 32378
 
 -- Version and update info
-Constants.VERSION = "1.0.0"
+Constants.VERSION = "1.0.1"
 Constants.GITHUB_REPO = "al5ina5/love-tetris"
 
 return Constants
