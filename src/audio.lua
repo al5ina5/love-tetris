@@ -130,84 +130,82 @@ function Audio:init()
     -- Secret Found (Original "Mystery" jingle)
     self.baseVolumes.secret = 0.04
     self.sounds.secret = generateMelody({
-        {'E5', 1}, {'G5', 1}, {'C6', 1}, {'B5', 1}, {'A5', 1}, {'F#5', 1}, {'D5', 1}, {'G5', 2}
+        {'D5', 1}, {'F5', 1}, {'G#5', 1}, {'A5', 2}, {'F5', 1}, {'D5', 4}
     }, 0.1, 1.0)
 
     -- Item Get (Original "Success" jingle)
     self.baseVolumes.item = 0.04
     self.sounds.item = generateMelody({
-        {'C5', 1}, {'E5', 1}, {'G5', 1}, {'C6', 4}
+        {'A4', 1}, {'D5', 1}, {'F#5', 1}, {'A5', 4}
     }, 0.12, 1.0)
 
-    -- Ancient Lullaby (Menu - Melancholy/Relaxing)
+    -- Ethereal Calm (Menu - Relaxing)
     local lullaby = {
-        {'C5', 12}, {'E5', 4}, {'B4', 16},
-        {'A4', 4}, {'B4', 4}, {'C5', 12}, {'E5', 4}, {'B4', 16},
-        {'C5', 12}, {'E5', 4}, {'G5', 8}, {'F5', 8}, {'E5', 8},
-        {'D5', 4}, {'C5', 4}, {'G4', 16}
+        {'G4', 8}, {'C5', 8}, {'D5', 4}, {'E5', 12},
+        {'F5', 8}, {'E5', 8}, {'D5', 4}, {'C5', 12},
+        {'G4', 8}, {'C5', 8}, {'D5', 4}, {'B4', 12},
+        {'A4', 8}, {'G4', 24}
     }
     self.baseVolumes.menu = 0.02
-    self.music.menu = generateMelody(lullaby, 0.15, 1.0)
+    self.music.menu = generateMelody(lullaby, 0.18, 1.0)
     self.music.menu:setLooping(true)
 
-    -- Village Morning (Game - Relaxing)
+    -- Sunlit Path (Game - Relaxing)
     local kakariko = {
-        {'G4', 4}, {'B4', 4}, {'E5', 8}, {'G5', 4}, {'F#5', 4}, {'E5', 8},
-        {'C5', 4}, {'E5', 4}, {'A5', 8}, {'C6', 4}, {'B5', 4}, {'A5', 8},
-        {'G5', 4}, {'F#5', 4}, {'E5', 4}, {'D5', 4}, {'C5', 8}, {'G4', 8}
+        {'D4', 6}, {'E4', 2}, {'F#4', 8}, {'G4', 6}, {'A4', 2}, {'B4', 8},
+        {'D5', 4}, {'C#5', 4}, {'B4', 4}, {'A4', 4}, {'G4', 8}, {'F#4', 8},
+        {'E4', 4}, {'A4', 4}, {'D4', 16}
     }
     self.baseVolumes.kakariko = 0.02
     self.music.kakariko = generateMelody(kakariko, 0.18, 1.0)
     self.music.kakariko:setLooping(true)
 
-    -- Rainy Waltz (Game - Melancholy/Slow)
+    -- Stormy Night (Game - Melancholy/Slow)
     local storms = {
-        {'E4', 4}, {'G4', 4}, {'E5', 16},
-        {'E4', 4}, {'G4', 4}, {'E5', 16},
-        {'F#5', 12}, {'G5', 4}, {'F#5', 4}, {'G5', 4},
-        {'F#5', 4}, {'D5', 4}, {'B4', 16}
+        {'A3', 8}, {'C4', 8}, {'E4', 8}, {'D4', 8},
+        {'F4', 8}, {'E4', 8}, {'C4', 8}, {'B3', 8},
+        {'A3', 8}, {'C4', 8}, {'E4', 8}, {'G4', 8},
+        {'F4', 12}, {'E4', 4}, {'D4', 16}
     }
     self.baseVolumes.storms = 0.02
     self.music.storms = generateMelody(storms, 0.15, 1.0)
     self.music.storms:setLooping(true)
 
-    -- Hero's Journey (Game - Melancholy/Slow)
+    -- Legend's End (Game - Somber)
     local theme = {
-        {'G3', 8}, {'D3', 8}, {'G3', 2}, {'G3', 1}, {'A3', 1}, {'B3', 1}, {'C4', 1}, {'D4', 1}, {'E4', 10},
-        {'R', 2}, {'E4', 2}, {'F4', 1}, {'G4', 1}, {'A4', 10},
-        {'A4', 2}, {'G4', 2}, {'F4', 2}, {'G4', 2}, {'F4', 4}, {'E4', 8}
+        {'D4', 12}, {'A3', 4}, {'D4', 8}, {'E4', 8}, {'F4', 12}, {'G4', 4}, {'A4', 16},
+        {'G4', 8}, {'F4', 8}, {'E4', 8}, {'D4', 8}, {'C4', 12}, {'E4', 4}, {'D4', 16}
     }
     self.baseVolumes.zelda = 0.015
-    self.music.zelda = generateMelody(theme, 0.15, 1.0)
+    self.music.zelda = generateMelody(theme, 0.2, 1.0)
     self.music.zelda:setLooping(true)
 
-    -- Whispering Woods (Game - Playful/Mysterious)
+    -- Deep Forest (Game - Mysterious)
     local saria = {
-        {'G4', 4}, {'B4', 4}, {'C5', 8},
-        {'G4', 4}, {'B4', 4}, {'C5', 8},
-        {'G4', 4}, {'B4', 4}, {'C5', 4}, {'F#5', 4}, {'E5', 8},
-        {'C5', 4}, {'D5', 4}, {'C5', 4}, {'A4', 4}, {'F4', 12}
+        {'E4', 6}, {'F#4', 2}, {'G4', 8}, {'B4', 4}, {'A4', 4}, {'G4', 8},
+        {'E4', 6}, {'F#4', 2}, {'G4', 8}, {'D5', 4}, {'C5', 4}, {'B4', 8},
+        {'A4', 4}, {'G4', 4}, {'F#4', 4}, {'D4', 4}, {'E4', 16}
     }
     self.baseVolumes.saria = 0.015
     self.music.saria = generateMelody(saria, 0.15, 1.0)
     self.music.saria:setLooping(true)
 
-    -- Spirit Fountain (Game - Arpeggios, Very Relaxing)
+    -- Crystal Waters (Game - Arpeggios)
     local fairy = {
-        {'A4', 2}, {'C5', 2}, {'E5', 2}, {'G#5', 2}, {'A5', 2}, {'G#5', 2}, {'E5', 2}, {'C5', 2},
-        {'D4', 2}, {'F4', 2}, {'A4', 2}, {'C5', 2}, {'D5', 2}, {'C5', 2}, {'A4', 2}, {'F4', 2},
-        {'G4', 2}, {'B4', 2}, {'D5', 2}, {'F#5', 2}, {'G5', 2}, {'F#5', 2}, {'D5', 2}, {'B4', 2},
-        {'E4', 2}, {'G4', 2}, {'B4', 2}, {'D#5', 2}, {'E5', 2}, {'D#5', 2}, {'B4', 2}, {'G4', 2}
+        {'C4', 2}, {'E4', 2}, {'G4', 2}, {'B4', 2}, {'C5', 2}, {'B4', 2}, {'G4', 2}, {'E4', 2},
+        {'A3', 2}, {'C4', 2}, {'E4', 2}, {'G4', 2}, {'A4', 2}, {'G4', 2}, {'E4', 2}, {'C4', 2},
+        {'F3', 2}, {'A3', 2}, {'C4', 2}, {'E4', 2}, {'F4', 2}, {'E4', 2}, {'C4', 2}, {'A3', 2},
+        {'G3', 2}, {'B3', 2}, {'D4', 2}, {'F4', 2}, {'G4', 2}, {'F4', 2}, {'D4', 2}, {'B3', 2}
     }
     self.baseVolumes.fairy = 0.012
     self.music.fairy = generateMelody(fairy, 0.12, 1.0)
     self.music.fairy:setLooping(true)
 
-    -- Lone Traveler (Game - Melancholy)
+    -- Desert Wind (Game - Melancholy)
     local epona = {
-        {'E5', 8}, {'C5', 8}, {'B4', 16},
-        {'E5', 8}, {'C5', 8}, {'B4', 16},
-        {'E5', 8}, {'C5', 8}, {'B4', 8}, {'C5', 8}, {'B4', 16}
+        {'A4', 12}, {'G4', 4}, {'F4', 16},
+        {'A4', 12}, {'G4', 4}, {'E4', 16},
+        {'D4', 8}, {'E4', 8}, {'F4', 8}, {'G4', 8}, {'A4', 16}
     }
     self.baseVolumes.epona = 0.015
     self.music.epona = generateMelody(epona, 0.2, 1.0)
@@ -270,6 +268,18 @@ function Audio:stopMusic()
     if self.currentMusic then
         self.currentMusic:stop()
         self.currentMusic = nil
+    end
+end
+
+function Audio:pauseMusic()
+    if self.currentMusic then
+        self.currentMusic:pause()
+    end
+end
+
+function Audio:resumeMusic()
+    if self.currentMusic then
+        self.currentMusic:play()
     end
 end
 

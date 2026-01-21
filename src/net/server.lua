@@ -66,7 +66,12 @@ end
 function Server:sendMessage(msg)
     if not self.host then return end
     -- Generic message send
-    local data = Protocol.encode(msg.type, msg.id or "host", msg.data or "")
+    local data
+    if msg.type == Protocol.MSG.GARBAGE then
+        data = Protocol.encode(msg.type, msg.id or "host", msg.lines or 0)
+    else
+        data = Protocol.encode(msg.type, msg.id or "host", msg.data or "")
+    end
     self:broadcast(data, nil, true)
 end
 
@@ -110,7 +115,8 @@ function Server:poll()
                    msg.type == Protocol.MSG.PIECE_MOVE or 
                    msg.type == Protocol.MSG.GAME_OVER or
                    msg.type == Protocol.MSG.START_COUNTDOWN or
-                   msg.type == Protocol.MSG.SCORE_SYNC then
+                   msg.type == Protocol.MSG.SCORE_SYNC or
+                   msg.type == Protocol.MSG.GARBAGE then
                     -- Relay to others
                     self:broadcast(event.data, event.peer, msg.type ~= Protocol.MSG.PIECE_MOVE)
                     

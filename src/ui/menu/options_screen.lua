@@ -15,6 +15,7 @@ function Options.init(menu)
     
     -- Option definitions
     Options.ITEMS = {
+        { name = "CONTROLS", type = "submenu", submenu = "controls" },
         { name = "SHADER", key = "shader", type = "select", options = {"OFF", "CRT", "GRAYSCALE", "DREAM", "GAMEBOY", "ANAGLYPH"} },
         { name = "GHOST PIECE", key = "ghost", type = "toggle" },
         { name = "MUSIC VOLUME", key = "musicVolume", type = "slider", min = 0, max = 10 },
@@ -27,8 +28,8 @@ end
 function Options.draw(menu, sw, sh, game)
     game:drawText("OPTIONS", 0, 30, sw, "center", {1, 1, 1})
     
-    local startY = 70
-    local spacing = 20
+    local startY = 60
+    local spacing = 18
     
     for i, item in ipairs(Options.ITEMS) do
         local y = startY + (i-1) * spacing
@@ -49,6 +50,8 @@ function Options.draw(menu, sw, sh, game)
             local val = menu.settings[item.key]
             local valText = string.rep("|", val) .. string.rep(".", item.max - val)
             game:drawText(valText .. " " .. val, 20, y, sw - 60, "right", color)
+        elseif item.type == "submenu" then
+            game:drawText(">>", 20, y, sw - 60, "right", color)
         end
     end
 end
@@ -103,6 +106,14 @@ function Options.handleKey(menu, key, onSettingChanged)
             local nextIdx = (idx % #item.options) + 1
             menu.settings[item.key] = item.options[nextIdx]
             if onSettingChanged then onSettingChanged(item.key, menu.settings[item.key]) end
+            return true
+        elseif item.type == "submenu" then
+            if item.submenu == "controls" then
+                -- Don't overwrite previousState - Controls screen will return to OPTIONS
+                menu.state = menu.STATE.CONTROLS
+                local ControlsUI = require('src.ui.menu.controls_screen')
+                ControlsUI.buildItems(menu)
+            end
             return true
         elseif item.type == "back" then
             return Options.back(menu)
@@ -164,6 +175,14 @@ function Options.handleGamepad(menu, button, onSettingChanged)
             menu.settings[item.key] = item.options[nextIdx]
             if onSettingChanged then onSettingChanged(item.key, menu.settings[item.key]) end
             return true
+        elseif item.type == "submenu" then
+            if item.submenu == "controls" then
+                -- Don't overwrite previousState - Controls screen will return to OPTIONS
+                menu.state = menu.STATE.CONTROLS
+                local ControlsUI = require('src.ui.menu.controls_screen')
+                ControlsUI.buildItems(menu)
+            end
+            return true
         elseif item.type == "back" then
             return Options.back(menu)
         end
@@ -174,8 +193,15 @@ function Options.handleGamepad(menu, button, onSettingChanged)
 end
 
 function Options.back(menu)
-    menu.state = menu.previousState or "main"
-    menu.selectedIndex = (menu.state == "main") and 4 or 2 -- Return to Options entry
+    menu.state = menu.previousState or menu.STATE.MAIN
+    -- Reset selection index to OPTIONS menu item position
+    if menu.state == menu.STATE.MAIN then
+        menu.selectedIndex = 4  -- OPTIONS is 4th item in main menu
+    elseif menu.state == menu.STATE.PAUSE then
+        menu.selectedIndex = 2  -- OPTIONS is 2nd item in pause menu
+    else
+        menu.selectedIndex = 1  -- Default
+    end
     return true
 end
 

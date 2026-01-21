@@ -13,6 +13,7 @@ Protocol.MSG = {
     GAME_OVER = "over",       -- Player topped out
     START_COUNTDOWN = "scd",  -- Start the 3-2-1 timer
     SCORE_SYNC = "score",     -- Sync player score
+    GARBAGE = "garb",        -- Send garbage lines to opponent
     PING = "ping",            -- Latency check
     PONG = "pong",            -- Latency response
 }
@@ -59,6 +60,10 @@ function Protocol.decode(data)
     elseif msgType == Protocol.MSG.SCORE_SYNC then
         msg.id = parts[2]
         msg.score = tonumber(parts[3]) or 0
+
+    elseif msgType == Protocol.MSG.GARBAGE then
+        msg.id = parts[2]
+        msg.lines = tonumber(parts[3]) or 0
 
     elseif msgType == Protocol.MSG.PING then
         msg.timestamp = tonumber(parts[2]) or 0

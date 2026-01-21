@@ -7,6 +7,8 @@ local Input = {
     buttonsJustPressed = {},
     keyTimers = {},
     buttonTimers = {},
+    lastPressTimes = {},
+    throttleDelay = 0.05, -- 50ms throttle to prevent double-clicks
     das = 0.167, -- Delay before auto-shift starts
     arr = 0.033, -- Auto-repeat rate
 }
@@ -85,6 +87,11 @@ function Input:shouldRepeat(keyOrButton, isGamepad)
 end
 
 function Input:keyPressed(key)
+    local now = love.timer.getTime()
+    if self.lastPressTimes[key] and (now - self.lastPressTimes[key]) < self.throttleDelay then
+        return
+    end
+    self.lastPressTimes[key] = now
     self.keysJustPressed[key] = true
     self.keyTimers[key] = 0
 end
@@ -94,6 +101,11 @@ function Input:keyReleased(key)
 end
 
 function Input:gamepadPressed(button)
+    local now = love.timer.getTime()
+    if self.lastPressTimes[button] and (now - self.lastPressTimes[button]) < self.throttleDelay then
+        return
+    end
+    self.lastPressTimes[button] = now
     self.buttonsJustPressed[button] = true
     self.buttonTimers[button] = 0
 end

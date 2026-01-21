@@ -61,7 +61,12 @@ end
 
 function Client:sendMessage(msg)
     if not self.connected or not self.server then return end
-    local data = Protocol.encode(msg.type, self.playerId or "?", msg.data or "")
+    local data
+    if msg.type == Protocol.MSG.GARBAGE then
+        data = Protocol.encode(msg.type, self.playerId or "?", msg.lines or 0)
+    else
+        data = Protocol.encode(msg.type, self.playerId or "?", msg.data or "")
+    end
     self.server:send(data, 0, "reliable")
 end
 
@@ -92,6 +97,7 @@ function Client:poll()
             self.connected = false
             self.server = nil
             self.playerId = nil
+            table.insert(messages, { type = "player_left", id = "host" })
         end
         event = self.host:service(0)
     end
