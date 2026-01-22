@@ -1,5 +1,5 @@
 -- src/tetris/piece.lua
--- Tetris piece management: spawning, movement, rotation, and bag randomizer
+-- Piece management: spawning, movement, rotation, and bag randomizer
 
 local Audio = require('src.audio')
 local Constants = require('src.constants')

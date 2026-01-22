@@ -32,7 +32,7 @@ function ConnectionManager.becomeHost(game)
         return
     end
 
-    game.discovery:startAdvertising("Sirtet", 12345, 4)
+    game.discovery:startAdvertising("Blockdrop", 12345, 4)
     game.stateManager.current = "waiting"
 end
 

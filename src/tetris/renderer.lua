@@ -1,5 +1,5 @@
 -- src/tetris/renderer.lua
--- Tetris board rendering with blocks, grid, ghost piece, and previews
+-- Board rendering with blocks, grid, ghost piece, and previews
 
 local Renderer = {}
 

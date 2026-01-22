@@ -1,5 +1,5 @@
 -- src/net/server.lua
--- Network server for Tetris
+-- Network server for Blockdrop
 -- Hosts the game and relays board/piece updates to all clients
 
 local enet = require("enet")
@@ -26,7 +26,7 @@ function Server:new(port)
     self.nextPlayerId = 1
     self.playerId = "host"
     
-    print("=== Tetris Server Started ===")
+    print("=== Blockdrop Server Started ===")
     print("Port: " .. self.port)
     
     return self

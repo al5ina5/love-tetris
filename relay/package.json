@@ -1,7 +1,7 @@
 {
-  "name": "sirtet-relay",
+  "name": "blockdrop-relay",
   "version": "1.0.0",
-  "description": "Unified Matchmaker and TCP Relay for Sirtet",
+  "description": "Unified Matchmaker and TCP Relay for Blockdrop",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",

@@ -1,5 +1,5 @@
 #!/bin/bash
-# PortMaster Launcher for Sirtet
+# PortMaster Launcher for Blockdrop
 
 XDG_DATA_HOME=${XDG_DATA_HOME:-$HOME/.local/share}
 
@@ -18,13 +18,15 @@ source $controlfolder/control.txt
 get_controls
 [ -f "${controlfolder}/mod_${CFW_NAME}.txt" ] && source "${controlfolder}/mod_${CFW_NAME}.txt"
 
-# Dynamic path resolution. We remove any trailing slashes to avoid // issues.
-CLEAN_DIR=$(echo "/$directory" | sed 's:/*$::')
-GAMEDIR="$CLEAN_DIR/Sirtet"
+# Dynamic path resolution - remove trailing slashes, handle leading slash
+GAMEDIR="${directory%/}/Blockdrop"
+# Ensure path starts with /
+[[ "$GAMEDIR" != /* ]] && GAMEDIR="/$GAMEDIR"
 
 # If not found in root, check in /ports/ subfolder
 if [ ! -d "$GAMEDIR" ]; then
-    GAMEDIR="$CLEAN_DIR/ports/Sirtet"
+    GAMEDIR="${directory%/}/ports/Blockdrop"
+    [[ "$GAMEDIR" != /* ]] && GAMEDIR="/$GAMEDIR"
 fi
 
 cd "$GAMEDIR"
@@ -37,7 +39,7 @@ mkdir -p "$XDG_CONFIG_HOME"
 
 # Redirect all output to log.txt for debugging
 exec > >(tee "$GAMEDIR/log.txt") 2>&1
-echo "--- Starting Sirtet ---"
+echo "--- Starting Blockdrop ---"
 echo "Date: $(date)"
 echo "GAMEDIR: $GAMEDIR"
 echo "Device: $DEVICE_NAME ($DEVICE_ARCH)"
@@ -74,9 +76,9 @@ echo "Using LÖVE binary: $LOVE_BIN"
 # We use the basename of LOVE_BIN for gptokeyb to watch
 LOVE_NAME=$(basename "$LOVE_BIN")
 
-$GPTOKEYB "$LOVE_NAME" -c "$GAMEDIR/Sirtet.gptk" &
+$GPTOKEYB "$LOVE_NAME" -c "$GAMEDIR/Blockdrop.gptk" &
 pm_platform_helper "$LOVE_BIN"
-"$LOVE_BIN" "$GAMEDIR/Sirtet.love"
+"$LOVE_BIN" "$GAMEDIR/Blockdrop.love"
 
 # Cleanup after exit
 killall gptokeyb

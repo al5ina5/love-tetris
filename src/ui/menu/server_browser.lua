@@ -55,8 +55,8 @@ function ServerBrowser.handleKey(menu, key)
         end
         return true
     elseif key == "escape" or key == "z" then
-        menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-        menu.selectedIndex = 2  -- FIND GAME is 2nd in multiplayer submenu
+        menu.state = Base.STATE.SUBMENU_LAN
+        menu.selectedIndex = 2  -- FIND GAME is 2nd in LAN submenu
         return true
     elseif key == "r" then
         menu.discovery:sendDiscoveryRequest()
@@ -86,8 +86,8 @@ function ServerBrowser.handleGamepad(menu, button)
         end
         return true
     elseif button == "b" or button == "back" then
-        menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-        menu.selectedIndex = 2  -- FIND GAME is 2nd in multiplayer submenu
+        menu.state = Base.STATE.SUBMENU_LAN
+        menu.selectedIndex = 2  -- FIND GAME is 2nd in LAN submenu
         return true
     elseif button == "x" or button == "y" then
         menu.discovery:sendDiscoveryRequest()

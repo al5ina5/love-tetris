@@ -1,5 +1,5 @@
 -- src/net/protocol.lua
--- Network message protocol for Tetris
+-- Network message protocol for Blockdrop
 -- Defines how messages are serialized/deserialized
 
 local Protocol = {}

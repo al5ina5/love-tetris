@@ -1,30 +1,7 @@
 -- src/ui/options.lua
 -- Modular options screen for the menu system
 
-local Updater = require("src.net.updater")
-
 local Options = {}
-
--- Build the options items list dynamically (to include/exclude update option)
-local function buildItems(menu)
-    local items = {
-        { name = "CONTROLS", type = "submenu", submenu = "controls" },
-        { name = "SHADER", key = "shader", type = "select", options = {"OFF", "CRT", "GRAYSCALE", "DREAM", "GAMEBOY", "ANAGLYPH"} },
-        { name = "GHOST PIECE", key = "ghost", type = "toggle" },
-        { name = "MUSIC VOLUME", key = "musicVolume", type = "slider", min = 0, max = 10 },
-        { name = "SFX VOLUME", key = "sfxVolume", type = "slider", min = 0, max = 10 },
-        { name = "FULLSCREEN", key = "fullscreen", type = "toggle" },
-    }
-    
-    -- Only add update option if supported on this platform
-    if Updater.isSupported() then
-        table.insert(items, { name = "CHECK FOR UPDATES", type = "action", action = "update" })
-    end
-    
-    table.insert(items, { name = "BACK", type = "back" })
-    
-    return items
-end
 
 function Options.init(menu)
     menu.optionsSelectedIndex = 1
@@ -36,12 +13,16 @@ function Options.init(menu)
         fullscreen = love.window.getFullscreen()
     }
     
-    -- Build option items (includes update if supported)
-    Options.ITEMS = buildItems(menu)
-    
-    -- Track update UI state
-    menu.updateState = "idle"  -- idle, checking, ready, downloading, done, error
-    menu.updateMessage = nil
+    -- Option definitions
+    Options.ITEMS = {
+        { name = "CONTROLS", type = "submenu", submenu = "controls" },
+        { name = "SHADER", key = "shader", type = "select", options = {"OFF", "CRT", "GRAYSCALE", "DREAM", "GAMEBOY", "ANAGLYPH"} },
+        { name = "GHOST PIECE", key = "ghost", type = "toggle" },
+        { name = "MUSIC VOLUME", key = "musicVolume", type = "slider", min = 0, max = 10 },
+        { name = "SFX VOLUME", key = "sfxVolume", type = "slider", min = 0, max = 10 },
+        { name = "FULLSCREEN", key = "fullscreen", type = "toggle" },
+        { name = "BACK", type = "back" }
+    }
 end
 
 function Options.draw(menu, sw, sh, game)
@@ -71,67 +52,8 @@ function Options.draw(menu, sw, sh, game)
             game:drawText(valText .. " " .. val, 40, y, sw - 120, "right", color)
         elseif item.type == "submenu" then
             game:drawText(">>", 40, y, sw - 120, "right", color)
-        elseif item.type == "action" and item.action == "update" then
-            -- Show update status
-            local statusText = Updater.getStatusText()
-            local statusColor = color
-            if Updater.hasUpdate() then
-                statusColor = {0.5, 1, 0.5}  -- Green for update available
-            end
-            game:drawText(statusText, 40, y, sw - 120, "right", statusColor)
         end
     end
-    
-    -- Show update message if any
-    if menu.updateMessage then
-        local msgColor = {1, 1, 0.5}
-        if menu.updateState == "error" then
-            msgColor = {1, 0.5, 0.5}
-        elseif menu.updateState == "done" then
-            msgColor = {0.5, 1, 0.5}
-        end
-        game:drawText(menu.updateMessage, 0, sh - 60, sw, "center", msgColor)
-    end
-end
-
--- Handle the update action (check, download, install)
-local function handleUpdateAction(menu)
-    if Updater.state.downloading then
-        -- Already downloading, ignore
-        return true
-    end
-    
-    if Updater.hasUpdate() and Updater.state.downloadUrl then
-        -- Update is available, download and install it
-        menu.updateState = "downloading"
-        menu.updateMessage = "Downloading update..."
-        
-        local success, err = Updater.downloadAndInstall()
-        if success then
-            menu.updateState = "done"
-            menu.updateMessage = "Update installed! Restart to apply."
-        else
-            menu.updateState = "error"
-            menu.updateMessage = err or "Download failed"
-        end
-    else
-        -- Check for updates
-        menu.updateState = "checking"
-        menu.updateMessage = "Checking for updates..."
-        
-        local hasUpdate, version, err = Updater.checkForUpdate()
-        if err then
-            menu.updateState = "error"
-            menu.updateMessage = err
-        elseif hasUpdate then
-            menu.updateState = "ready"
-            menu.updateMessage = "Update " .. version .. " available! Press again to install."
-        else
-            menu.updateState = "idle"
-            menu.updateMessage = "You're up to date! (v" .. Updater.getCurrentVersion() .. ")"
-        end
-    end
-    return true
 end
 
 function Options.handleKey(menu, key, onSettingChanged)
@@ -193,8 +115,6 @@ function Options.handleKey(menu, key, onSettingChanged)
                 ControlsUI.buildItems(menu)
             end
             return true
-        elseif item.type == "action" and item.action == "update" then
-            return handleUpdateAction(menu)
         elseif item.type == "back" then
             return Options.back(menu)
         end
@@ -263,8 +183,6 @@ function Options.handleGamepad(menu, button, onSettingChanged)
                 ControlsUI.buildItems(menu)
             end
             return true
-        elseif item.type == "action" and item.action == "update" then
-            return handleUpdateAction(menu)
         elseif item.type == "back" then
             return Options.back(menu)
         end

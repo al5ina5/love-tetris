@@ -1,11 +1,11 @@
 {
     "version": 1,
-    "name": "Sirtet",
-    "items": ["Sirtet.sh"],
+    "name": "Blockdrop",
+    "items": ["Blockdrop.sh"],
     "items_opt": [],
     "attr": {
-        "title": "Sirtet",
-        "desc": "Multiplayer Tetris boilerplate.",
+        "title": "Blockdrop",
+        "desc": "Multiplayer falling block puzzle game.",
         "inst": "D-Pad to move. X/Y for Menu. Host on one device, Find on another!",
         "genres": ["multiplayer", "puzzle"],
         "porter": "Antigravity",

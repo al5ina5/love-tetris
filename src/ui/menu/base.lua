@@ -2,6 +2,7 @@
 -- Base menu system with shared state and helpers
 
 local Background = require('src.ui.menu.background')
+local TitleAnimation = require('src.ui.menu.title_animation')
 
 local Base = {}
 
@@ -57,6 +58,9 @@ function Base.create(discovery, fonts)
         -- Background
         fallingBlocks = Background.init(),
         
+        -- Title animation
+        titleAnimation = TitleAnimation.init(),
+        
         -- Callbacks (set by game)
         onHost = nil,
         onStopHost = nil,
@@ -90,6 +94,10 @@ function Base.show(menu, state)
         menu.discovery:sendDiscoveryRequest()
     elseif state == Base.STATE.MAIN then
         menu.discovery:startListening()
+        -- Reset title animation when returning to main menu
+        if menu.titleAnimation.initialized then
+            TitleAnimation.reset(menu.titleAnimation)
+        end
     end
 end
 
@@ -107,6 +115,11 @@ function Base.update(menu, dt)
     
     -- Update falling blocks
     Background.update(menu.fallingBlocks, dt)
+    
+    -- Update title animation
+    if menu.state == Base.STATE.MAIN then
+        TitleAnimation.update(menu.titleAnimation, dt)
+    end
 
     -- Update input cooldown
     if menu.inputCooldown > 0 then
@@ -133,10 +146,17 @@ end
 function Base.drawLinkMenu(menu, sw, sh, game, title, subtitle, options)
     -- Title
     if title then
-        if title == "SIRTET" then
-            -- Main menu title - large font
-            if menu.fonts then love.graphics.setFont(menu.fonts.large) end
-            game:drawText(title, 0, sh/2 - 130, sw, "center", {1, 1, 1}, {0.3, 0.3, 0.3})
+        if title == "BLOCKDROP" then
+            -- Main menu title - animated falling letters
+            if menu.fonts and menu.fonts.large then
+                local font = menu.fonts.large
+                -- Initialize title animation if needed
+                if not menu.titleAnimation.initialized then
+                    TitleAnimation.setup(menu.titleAnimation, title, font)
+                end
+                -- Draw animated title
+                TitleAnimation.draw(menu.titleAnimation, sw/2, sh/2 - 130 + font:getHeight()/2, font, game, {0.3, 0.3, 0.3})
+            end
         else
             -- Submenu titles - medium font
             if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
@@ -172,7 +192,7 @@ end
 -- Automatically detects which style to use based on title
 function Base.drawList(menu, sw, sh, game, title, subtitle, options, startY)
     -- For navigation menus (main, submenus), use link style
-    if title == "SIRTET" or subtitle or not startY then
+    if title == "BLOCKDROP" or subtitle or not startY then
         Base.drawLinkMenu(menu, sw, sh, game, title, subtitle, options)
     else
         -- Content-heavy style (left-aligned, for options screens)

@@ -26,11 +26,8 @@ function WaitingScreens.handleWaitingKey(menu, key, game)
     
     if key == "escape" or key == "z" then
         if menu.onStopHost then menu.onStopHost() end
-        menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-        menu.selectedIndex = 1  -- HOST GAME is 1st in multiplayer submenu
-        return true
-    elseif key == "return" or key == "x" or key == "space" then
-        if menu.onStartAlone then menu.onStartAlone() end
+        menu.state = Base.STATE.SUBMENU_LAN
+        menu.selectedIndex = 1  -- CREATE GAME is 1st in LAN submenu
         return true
     end
     return false
@@ -41,11 +38,8 @@ function WaitingScreens.handleWaitingGamepad(menu, button, game)
     
     if button == "b" or button == "back" then
         if menu.onStopHost then menu.onStopHost() end
-        menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-        menu.selectedIndex = 1  -- HOST GAME is 1st in multiplayer submenu
-        return true
-    elseif button == "a" or button == "start" then
-        if menu.onStartAlone then menu.onStartAlone() end
+        menu.state = Base.STATE.SUBMENU_LAN
+        menu.selectedIndex = 1  -- CREATE GAME is 1st in LAN submenu
         return true
     end
     return false
@@ -56,8 +50,8 @@ function WaitingScreens.handleConnectingKey(menu, key)
     
     if key == "escape" or key == "z" then
         print("Menu: User cancelled connection")
-        menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-        menu.selectedIndex = 2  -- Back to multiplayer menu (depends on where user came from)
+        menu.state = Base.STATE.SUBMENU_LAN
+        menu.selectedIndex = 2  -- FIND GAME is 2nd in LAN submenu
         if menu.onCancel then menu.onCancel() end
         return true
     end
@@ -69,8 +63,8 @@ function WaitingScreens.handleConnectingGamepad(menu, button)
     
     if button == "b" then
         print("Menu: User cancelled connection (gamepad)")
-        menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-        menu.selectedIndex = 2  -- Back to multiplayer menu (depends on where user came from)
+        menu.state = Base.STATE.SUBMENU_LAN
+        menu.selectedIndex = 2  -- FIND GAME is 2nd in LAN submenu
         if menu.onCancel then menu.onCancel() end
         return true
     end

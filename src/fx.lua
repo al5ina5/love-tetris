@@ -1,5 +1,5 @@
 -- src/fx.lua
--- Visual effects system for Tetris (particles, screen shake, flashes)
+-- Visual effects system (particles, screen shake, flashes)
 
 local FX = {
     particles = {},

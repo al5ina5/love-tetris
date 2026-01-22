@@ -3,3 +3,11 @@ api/node_modules/
 api/dist/
 api/.vercel/
 .vercel
+
+# Build system
+build/desktop/.cache/
+dist/desktop/
+
+# Relay server
+relay/node_modules/
+relay/dist/

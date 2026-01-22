@@ -1,5 +1,5 @@
 -- src/tetris/scoring.lua
--- Tetris scoring system: line clearing, combos, garbage, and level progression
+-- Scoring system: line clearing, combos, garbage, and level progression
 
 local Audio = require('src.audio')
 local FX = require('src.fx')

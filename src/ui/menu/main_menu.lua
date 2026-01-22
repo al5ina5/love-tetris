@@ -1,13 +1,7 @@
 -- src/ui/menu/main_menu.lua
 -- Main menu screen
 
-local Updater = require("src.net.updater")
-local Constants = require("src.constants")
-
 local MainMenu = {}
-
--- Track if we've checked for updates this session
-local updateCheckDone = false
 
 function MainMenu.draw(menu, sw, sh, game)
     local Base = require('src.ui.menu.base')
@@ -20,25 +14,7 @@ function MainMenu.draw(menu, sw, sh, game)
             "STATS",
             "OPTIONS",
         }
-        Base.drawLinkMenu(menu, sw, sh, game, "SIRTET", nil, options)
-        
-        -- Check for updates in background (once per session)
-        if Updater.isSupported() and not updateCheckDone and not Updater.state.checking then
-            updateCheckDone = true
-            -- Do the check (this is blocking but fast - just a small HTTP request)
-            Updater.checkForUpdate()
-        end
-        
-        -- Show update notification if available
-        if Updater.hasUpdate() then
-            local updateText = "Update available: " .. Updater.getLatestVersion() .. " (current: v" .. Constants.VERSION .. ")"
-            if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-            game:drawText(updateText, 0, sh - 40, sw, "center", {0.5, 1, 0.5})
-        end
-        
-        -- Show version in corner
-        if menu.fonts then love.graphics.setFont(menu.fonts.medium) end
-        game:drawText("v" .. Constants.VERSION, sw - 80, sh - 30, 70, "right", {0.5, 0.5, 0.5})
+        Base.drawLinkMenu(menu, sw, sh, game, "BLOCKDROP", nil, options)
     elseif menu.state == Base.STATE.SUBMENU_SINGLEPLAYER then
         -- Single player submenu - link style
         local options = {
@@ -50,16 +26,16 @@ function MainMenu.draw(menu, sw, sh, game)
     elseif menu.state == Base.STATE.SUBMENU_MULTIPLAYER then
         -- Multiplayer submenu - link style
         local options = {
-            "LAN",
             "ONLINE",
+            "LAN",
             "BACK",
         }
         Base.drawLinkMenu(menu, sw, sh, game, "MULTIPLAYER", nil, options)
     elseif menu.state == Base.STATE.SUBMENU_LAN then
         -- LAN submenu - link style
         local options = {
-            "HOST",
-            "BROWSE",
+            "CREATE GAME",
+            "FIND GAME",
             "JOIN BY IP",
             "BACK",
         }
@@ -67,9 +43,9 @@ function MainMenu.draw(menu, sw, sh, game)
     elseif menu.state == Base.STATE.SUBMENU_ONLINE then
         -- Online submenu - link style
         local options = {
-            "HOST",
+            "CREATE GAME",
+            "FIND GAME",
             "JOIN WITH CODE",
-            "BROWSE GAMES",
             "BACK",
         }
         Base.drawLinkMenu(menu, sw, sh, game, "ONLINE", nil, options)
@@ -101,9 +77,13 @@ function MainMenu.handleKey(menu, key, game)
             menu.state = Base.STATE.MAIN
             menu.selectedIndex = 2
             return true
-        elseif menu.state == Base.STATE.SUBMENU_LAN or menu.state == Base.STATE.SUBMENU_ONLINE then
+        elseif menu.state == Base.STATE.SUBMENU_ONLINE then
             menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-            menu.selectedIndex = 1
+            menu.selectedIndex = 1  -- ONLINE is 1st
+            return true
+        elseif menu.state == Base.STATE.SUBMENU_LAN then
+            menu.state = Base.STATE.SUBMENU_MULTIPLAYER
+            menu.selectedIndex = 2  -- LAN is 2nd
             return true
         else
             -- Default back to main menu
@@ -139,9 +119,13 @@ function MainMenu.handleGamepad(menu, button, game)
             menu.state = Base.STATE.MAIN
             menu.selectedIndex = 2
             return true
-        elseif menu.state == Base.STATE.SUBMENU_LAN or menu.state == Base.STATE.SUBMENU_ONLINE then
+        elseif menu.state == Base.STATE.SUBMENU_ONLINE then
             menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-            menu.selectedIndex = 1
+            menu.selectedIndex = 1  -- ONLINE is 1st
+            return true
+        elseif menu.state == Base.STATE.SUBMENU_LAN then
+            menu.state = Base.STATE.SUBMENU_MULTIPLAYER
+            menu.selectedIndex = 2  -- LAN is 2nd
             return true
         else
             -- Default back to main menu
@@ -161,11 +145,11 @@ function MainMenu.getMaxIndex(menu)
     elseif menu.state == Base.STATE.SUBMENU_SINGLEPLAYER then
         return 3  -- Sprint, Marathon, Back
     elseif menu.state == Base.STATE.SUBMENU_MULTIPLAYER then
-        return 3  -- LAN, Online, Back
+        return 3  -- Online, LAN, Back
     elseif menu.state == Base.STATE.SUBMENU_LAN then
-        return 4  -- Host, Browse, Join IP, Back
+        return 4  -- Create Game, Find Game, Join IP, Back
     elseif menu.state == Base.STATE.SUBMENU_ONLINE then
-        return 4  -- Host, Join Code, Browse, Back
+        return 4  -- Create Game, Find Game, Join Code, Back
     end
     return 1
 end
@@ -212,12 +196,12 @@ function MainMenu.select(menu, game)
     elseif menu.state == Base.STATE.SUBMENU_MULTIPLAYER then
         -- Multiplayer submenu
         if menu.selectedIndex == 1 then
-            -- LAN
-            menu.state = Base.STATE.SUBMENU_LAN
-            menu.selectedIndex = 1
-        elseif menu.selectedIndex == 2 then
             -- Online
             menu.state = Base.STATE.SUBMENU_ONLINE
+            menu.selectedIndex = 1
+        elseif menu.selectedIndex == 2 then
+            -- LAN
+            menu.state = Base.STATE.SUBMENU_LAN
             menu.selectedIndex = 1
         elseif menu.selectedIndex == 3 then
             -- Back
@@ -245,7 +229,7 @@ function MainMenu.select(menu, game)
         elseif menu.selectedIndex == 4 then
             -- Back
             menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-            menu.selectedIndex = 1
+            menu.selectedIndex = 2  -- LAN is 2nd
         end
     elseif menu.state == Base.STATE.SUBMENU_ONLINE then
         -- Online submenu
@@ -256,19 +240,19 @@ function MainMenu.select(menu, game)
             menu.selectedIndex = 1
             menu.isPublicRoom = true
         elseif menu.selectedIndex == 2 then
-            -- Join with Code
-            if game then game.gameMode = "VERSUS" end
-            menu.state = Base.STATE.ROOM_CODE_INPUT
-        elseif menu.selectedIndex == 3 then
             -- Browse Online Games
             if game then game.gameMode = "VERSUS" end
             menu.state = Base.STATE.ONLINE_BROWSE
             menu.selectedIndex = 1
             if menu.onRefreshOnlineRooms then menu.onRefreshOnlineRooms() end
+        elseif menu.selectedIndex == 3 then
+            -- Join with Code
+            if game then game.gameMode = "VERSUS" end
+            menu.state = Base.STATE.ROOM_CODE_INPUT
         elseif menu.selectedIndex == 4 then
             -- Back
             menu.state = Base.STATE.SUBMENU_MULTIPLAYER
-            menu.selectedIndex = 2
+            menu.selectedIndex = 1  -- ONLINE is 1st
         end
     end
     return true

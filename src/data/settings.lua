@@ -1,5 +1,5 @@
 -- src/settings.lua
--- Persistent settings management for Sirtet
+-- Persistent settings management for Blockdrop
 
 local Settings = {}
 

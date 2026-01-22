@@ -1,5 +1,5 @@
 function love.conf(t)
-    t.window.title = "Sirtet"
+    t.window.title = "Blockdrop"
     t.window.width = 1280   -- 640 * 2 for better visibility
     t.window.height = 960   -- 480 * 2
     t.window.vsync = 1
@@ -8,7 +8,7 @@ function love.conf(t)
     t.window.minheight = 480
     
     -- Game identity (for save files)
-    t.identity = "sirtet"
+    t.identity = "blockdrop"
     
     -- CRT Effect
     t.crt = true

@@ -9,12 +9,12 @@ function Renderer.init()
     love.graphics.setDefaultFilter("nearest", "nearest")
     love.graphics.setLineStyle("rough")
     
-    -- Create fonts optimized for sharp scaling
+    -- Create fonts optimized for sharp scaling (Press Start 2P - OFL licensed)
     local fonts = {
-        small = love.graphics.newFont('assets/fonts/upheavtt.ttf', 24),
-        medium = love.graphics.newFont('assets/fonts/upheavtt.ttf', 36),
-        large = love.graphics.newFont('assets/fonts/upheavtt.ttf', 80),
-        score = love.graphics.newFont('assets/fonts/upheavtt.ttf', 60)
+        small = love.graphics.newFont('assets/fonts/PressStart2P-Regular.ttf', 12),
+        medium = love.graphics.newFont('assets/fonts/PressStart2P-Regular.ttf', 16),
+        large = love.graphics.newFont('assets/fonts/PressStart2P-Regular.ttf', 32),
+        score = love.graphics.newFont('assets/fonts/PressStart2P-Regular.ttf', 24)
     }
     
     for _, f in pairs(fonts) do

@@ -1,5 +1,5 @@
 -- src/systems/input.lua
--- Input handling for Tetris with DAS/ARR
+-- Input handling with DAS/ARR
 -- Supports keyboard and gamepad with action mapping
 
 local Input = {

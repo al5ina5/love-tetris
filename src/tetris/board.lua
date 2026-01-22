@@ -1,5 +1,5 @@
 -- src/tetris/board.lua
--- Tetris board core - coordinates all tetris modules
+-- Game board core - coordinates all board modules
 
 local Piece = require('src.tetris.piece')
 local Scoring = require('src.tetris.scoring')

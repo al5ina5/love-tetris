@@ -11,54 +11,55 @@ Constants.GRID_HEIGHT = 20
 Constants.BLOCK_SIZE_W = 32
 Constants.BLOCK_SIZE_H = 22
 
+-- Custom color palette for game pieces
 Constants.PIECES = {
     I = {
         {0,0,0,0},
         {1,1,1,1},
         {0,0,0,0},
         {0,0,0,0},
-        color = {0, 1, 1}, -- Cyan
+        color = {0.4, 0.85, 0.9}, -- Soft teal
         id = 1
     },
     J = {
         {1,0,0},
         {1,1,1},
         {0,0,0},
-        color = {0, 0, 1}, -- Blue
+        color = {0.35, 0.45, 0.85}, -- Periwinkle blue
         id = 2
     },
     L = {
         {0,0,1},
         {1,1,1},
         {0,0,0},
-        color = {1, 0.5, 0}, -- Orange
+        color = {0.95, 0.65, 0.35}, -- Peach orange
         id = 3
     },
     O = {
         {1,1},
         {1,1},
-        color = {1, 1, 0}, -- Yellow
+        color = {0.95, 0.85, 0.45}, -- Soft gold
         id = 4
     },
     S = {
         {0,1,1},
         {1,1,0},
         {0,0,0},
-        color = {0, 1, 0}, -- Green
+        color = {0.45, 0.85, 0.55}, -- Mint green
         id = 5
     },
     T = {
         {0,1,0},
         {1,1,1},
         {0,0,0},
-        color = {0.5, 0, 1}, -- Purple
+        color = {0.85, 0.45, 0.75}, -- Rose pink
         id = 6
     },
     Z = {
         {1,1,0},
         {0,1,1},
         {0,0,0},
-        color = {1, 0, 0}, -- Red
+        color = {0.9, 0.45, 0.45}, -- Coral
         id = 7
     },
     GARBAGE = {
@@ -91,12 +92,8 @@ Constants.WALL_KICKS_I = {
 }
 
 -- Online multiplayer API endpoint
-Constants.API_BASE_URL = "https://sirtet-multiplayer-production.up.railway.app"
+Constants.API_BASE_URL = "https://blockdrop-multiplayer-production.up.railway.app"
 Constants.RELAY_HOST = "turntable.proxy.rlwy.net" 
 Constants.RELAY_PORT = 32378
-
--- Version and update info
-Constants.VERSION = "1.0.1"
-Constants.GITHUB_REPO = "al5ina5/love-tetris"
 
 return Constants

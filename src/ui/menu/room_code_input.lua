@@ -37,7 +37,7 @@ function RoomCodeInput.handleKey(menu, key)
         return RoomCodeInput.submit(menu)
     elseif key == "escape" or key == "z" then
         menu.state = Base.STATE.SUBMENU_ONLINE
-        menu.selectedIndex = 2
+        menu.selectedIndex = 3
         return true
     end
     
@@ -57,7 +57,7 @@ function RoomCodeInput.handleGamepad(menu, button)
         return RoomCodeInput.submit(menu)
     elseif button == "b" or button == "back" then
         menu.state = Base.STATE.SUBMENU_ONLINE
-        menu.selectedIndex = 2
+        menu.selectedIndex = 3
         return true
     end
     

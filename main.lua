@@ -7,8 +7,8 @@ function love.load()
     -- Pixel-art friendly graphics settings
     love.graphics.setDefaultFilter("nearest", "nearest")
 
-    -- Set window title (Sirtet)
-    love.window.setTitle("Sirtet")
+    -- Set window title
+    love.window.setTitle("Blockdrop")
 
     -- Initialize game
     Game:load()

@@ -1,5 +1,5 @@
 -- src/net/client.lua
--- Network client for Tetris
+-- Network client for Blockdrop
 -- Connects to a server and syncs board/piece updates
 
 local enet = require("enet")

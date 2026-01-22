@@ -261,7 +261,7 @@ function OnlineScreens.handleJoinKey(menu, key, game)
         if key == "return" or key == "space" or key == "x" or key == "escape" or key == "z" then
             menu.onlineError = nil
             menu.state = Base.STATE.SUBMENU_ONLINE
-            menu.selectedIndex = 2
+            menu.selectedIndex = 3
             return true
         end
         return false
@@ -288,12 +288,12 @@ function OnlineScreens.handleJoinKey(menu, key, game)
         elseif menu.selectedIndex == 3 then
             -- Back
             menu.state = Base.STATE.SUBMENU_ONLINE
-            menu.selectedIndex = 2
+            menu.selectedIndex = 3
             return true
         end
     elseif key == "escape" or key == "z" then
         menu.state = Base.STATE.SUBMENU_ONLINE
-        menu.selectedIndex = 2
+        menu.selectedIndex = 3
         return true
     end
     return false
@@ -308,7 +308,7 @@ function OnlineScreens.handleBrowseKey(menu, key, game)
         if key == "return" or key == "space" or key == "x" or key == "escape" or key == "z" then
             menu.onlineError = nil
             menu.state = Base.STATE.SUBMENU_ONLINE
-            menu.selectedIndex = 3
+            menu.selectedIndex = 2
             return true
         end
         return false
@@ -341,12 +341,12 @@ function OnlineScreens.handleBrowseKey(menu, key, game)
         elseif menu.selectedIndex == #menu.onlineRooms + 2 then
             -- Back
             menu.state = Base.STATE.SUBMENU_ONLINE
-            menu.selectedIndex = 3
+            menu.selectedIndex = 2
             return true
         end
     elseif key == "escape" or key == "z" then
         menu.state = Base.STATE.SUBMENU_ONLINE
-        menu.selectedIndex = 3
+        menu.selectedIndex = 2
         return true
     end
     return false
